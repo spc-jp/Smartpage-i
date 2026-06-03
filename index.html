@@ -177,15 +177,46 @@
     body.preview-mode header,
     body.preview-mode #where-banner,
     body.preview-mode footer { display: none !important; }
-    body.preview-mode #canvas-wrap { background: white; }
+    body.preview-mode #canvas-wrap {
+      background: #e2e8f0;
+      display: flex; align-items: flex-start;
+      justify-content: center; padding: 24px 16px 80px;
+    }
     body.preview-mode .sec-hint,
     body.preview-mode .sec-label { display: none !important; }
-    body.preview-mode .sec { border: none !important; box-shadow: none !important; cursor: default; pointer-events: none; }
-    body.preview-mode #site-canvas { max-width: 100% !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
-    #preview-bar { display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 10px 20px; border-radius: 32px; font-size: 12px; font-weight: 700; z-index: 9999; gap: 12px; align-items: center; box-shadow: 0 4px 24px rgba(0,0,0,0.3); white-space: nowrap; }
+    body.preview-mode .sec {
+      border: none !important; box-shadow: none !important;
+      cursor: default; pointer-events: none;
+    }
+    body.preview-mode.sp-mode #site-canvas {
+      max-width: 390px;
+      box-shadow: 0 0 0 10px #1e293b, 0 0 0 12px #334155, 0 20px 60px rgba(0,0,0,0.4) !important;
+      border-radius: 36px !important; border: none !important; overflow: hidden !important;
+    }
+    body.preview-mode.pc-mode #site-canvas {
+      max-width: 960px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15) !important;
+      border-radius: 8px !important; border: none !important;
+    }
+    #preview-bar {
+      display: none; position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%); background: #0f172a; color: white;
+      padding: 10px 16px; border-radius: 32px; font-size: 12px; font-weight: 700;
+      z-index: 9999; gap: 8px; align-items: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.35); white-space: nowrap;
+    }
     #preview-bar.show { display: flex; }
-    #preview-bar .exit-btn { background: white; color: var(--navy); border: none; border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 700; cursor: pointer; }
-    #preview-bar .mode-btn { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; cursor: pointer; }
+    #preview-bar .exit-btn {
+      background: white; color: #0f172a; border: none;
+      border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+    #preview-bar .mode-btn {
+      background: rgba(255,255,255,0.1); color: white;
+      border: 1px solid rgba(255,255,255,0.25); border-radius: 20px;
+      padding: 4px 12px; font-size: 11px; cursor: pointer; transition: background 0.2s;
+    }
+    #preview-bar .mode-btn:hover { background: rgba(255,255,255,0.2); }
+    #preview-bar .mode-btn.active { background: rgba(255,255,255,0.3); border-color: white; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen flex flex-col overflow-hidden text-gray-800">
@@ -196,13 +227,16 @@
     <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg shadow" style="background:var(--navy)">S</div>
     <span class="text-lg font-black tracking-tight">Smartpage <span style="color:var(--blue)">I</span></span>
     <span class="ml-3 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs rounded-full border border-amber-200 font-medium" id="site-name-badge">サンプル製造株式会社 様</span>
+    <button onclick="showIndustryModal()" class="ml-2 px-2.5 py-1 text-xs rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition flex items-center gap-1">
+      <i class="fas fa-sync-alt text-[10px]"></i>業種切替
+    </button>
   </div>
   <div class="flex items-center gap-3">
     <button onclick="setPreview('pc')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" title="PC表示"><i class="fas fa-desktop text-sm"></i></button>
     <button onclick="setPreview('sp')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" title="スマホ表示"><i class="fas fa-mobile-alt text-sm"></i></button>
     <div class="w-px h-5 bg-gray-200"></div>
     <button class="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition" onclick="togglePreview()">プレビュー</button>
-    <button class="px-3 py-1.5 text-sm text-white rounded-lg shadow-sm hover:opacity-90 transition" style="background:var(--navy)" onclick="showToast('✅ 公開しました！')">更新を公開</button>
+    <button class="px-3 py-1.5 text-sm text-white rounded-lg shadow-sm hover:opacity-90 transition" style="background:var(--navy)" onclick="confirmPublish()">更新を公開</button>
   </div>
 </header>
 
@@ -259,6 +293,186 @@
       <i class="fas fa-map-marker-alt" style="color:var(--gold)"></i>
       <span id="where-text">セクションをクリックして編集を開始</span>
     </div>
+
+    <!-- アクセス解析ダッシュボード（analytics選択時に表示） -->
+    <div id="analytics-dashboard" class="hidden w-full h-full overflow-y-auto p-5" style="background:#f8fafc">
+      <div class="max-w-3xl mx-auto">
+
+        <!-- ヘッダー -->
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="text-lg font-black text-gray-900" style="font-family:'Noto Serif JP',serif">アクセス解析レポート</h2>
+            <p class="text-xs text-gray-400 mt-0.5">2025年5月1日 〜 5月31日（サンプルデータ）</p>
+          </div>
+          <span class="px-3 py-1.5 text-xs font-bold rounded-full text-amber-700 border border-amber-200" style="background:#fffbeb">
+            <i class="fas fa-flask mr-1"></i>デモ表示中
+          </span>
+        </div>
+
+        <!-- KPIカード4枚 -->
+        <div class="grid grid-cols-4 gap-3 mb-5">
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <div class="text-2xl font-black" style="color:var(--navy)">1,248</div>
+            <div class="text-[10px] text-gray-400 mt-1 font-medium">月間訪問者数</div>
+            <div class="text-[10px] text-green-600 font-bold mt-1"><i class="fas fa-arrow-up"></i> 前月比 +12%</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <div class="text-2xl font-black" style="color:var(--blue)">3,817</div>
+            <div class="text-[10px] text-gray-400 mt-1 font-medium">ページビュー</div>
+            <div class="text-[10px] text-green-600 font-bold mt-1"><i class="fas fa-arrow-up"></i> 前月比 +8%</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <div class="text-2xl font-black text-orange-500">2:34</div>
+            <div class="text-[10px] text-gray-400 mt-1 font-medium">平均滞在時間</div>
+            <div class="text-[10px] text-red-500 font-bold mt-1"><i class="fas fa-arrow-down"></i> 前月比 -5%</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+            <div class="text-2xl font-black text-green-600">23</div>
+            <div class="text-[10px] text-gray-400 mt-1 font-medium">お問い合わせ数</div>
+            <div class="text-[10px] text-green-600 font-bold mt-1"><i class="fas fa-arrow-up"></i> 前月比 +21%</div>
+          </div>
+        </div>
+
+        <!-- 週別グラフ（SVG棒グラフ） -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+          <div class="flex items-center justify-between mb-4">
+            <div class="font-bold text-sm text-gray-800">週別訪問者数</div>
+            <div class="text-[10px] text-gray-400">5月</div>
+          </div>
+          <svg viewBox="0 0 540 120" xmlns="http://www.w3.org/2000/svg" class="w-full">
+            <!-- グリッド線 -->
+            <line x1="0" y1="20" x2="540" y2="20" stroke="#f1f5f9" stroke-width="1"/>
+            <line x1="0" y1="50" x2="540" y2="50" stroke="#f1f5f9" stroke-width="1"/>
+            <line x1="0" y1="80" x2="540" y2="80" stroke="#f1f5f9" stroke-width="1"/>
+            <!-- ラベル -->
+            <text x="0" y="18" font-size="9" fill="#94a3b8">400</text>
+            <text x="0" y="48" font-size="9" fill="#94a3b8">300</text>
+            <text x="0" y="78" font-size="9" fill="#94a3b8">200</text>
+            <!-- 棒グラフ（週1〜週5） -->
+            <rect x="50" y="55" width="60" height="55" rx="6" fill="#dbeafe"/>
+            <rect x="160" y="35" width="60" height="75" rx="6" fill="#93c5fd"/>
+            <rect x="270" y="25" width="60" height="85" rx="6" fill="#3b82f6"/>
+            <rect x="380" y="40" width="60" height="70" rx="6" fill="#2563eb"/>
+            <rect x="490" y="15" width="40" height="95" rx="6" fill="#1a2d5a"/>
+            <!-- 数値 -->
+            <text x="80" y="50" font-size="10" fill="#64748b" text-anchor="middle">243</text>
+            <text x="190" y="30" font-size="10" fill="#64748b" text-anchor="middle">302</text>
+            <text x="300" y="20" font-size="10" fill="#64748b" text-anchor="middle">341</text>
+            <text x="410" y="35" font-size="10" fill="#64748b" text-anchor="middle">289</text>
+            <text x="510" y="10" font-size="10" fill="#1a2d5a" font-weight="bold" text-anchor="middle">310</text>
+            <!-- 週ラベル -->
+            <text x="80" y="115" font-size="9" fill="#94a3b8" text-anchor="middle">第1週</text>
+            <text x="190" y="115" font-size="9" fill="#94a3b8" text-anchor="middle">第2週</text>
+            <text x="300" y="115" font-size="9" fill="#94a3b8" text-anchor="middle">第3週</text>
+            <text x="410" y="115" font-size="9" fill="#94a3b8" text-anchor="middle">第4週</text>
+            <text x="510" y="115" font-size="9" fill="#1a2d5a" font-weight="bold" text-anchor="middle">第5週</text>
+          </svg>
+        </div>
+
+        <!-- 人気ページ＋流入元 -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <!-- 人気ページ -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div class="font-bold text-sm text-gray-800 mb-3">よく見られているページ</div>
+            <div class="space-y-2.5">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 font-medium">トップページ</span>
+                  <span class="font-bold" style="color:var(--navy)">1,248</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 rounded-full" style="width:100%;background:var(--navy)"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 font-medium">製品・加工事例</span>
+                  <span class="font-bold text-blue-600">842</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-blue-400 rounded-full" style="width:67%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 font-medium">技術・設備紹介</span>
+                  <span class="font-bold text-blue-400">631</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-blue-300 rounded-full" style="width:50%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 font-medium">お問い合わせ</span>
+                  <span class="font-bold text-green-600">412</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-green-400 rounded-full" style="width:33%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 font-medium">会社案内</span>
+                  <span class="font-bold text-gray-400">284</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-gray-300 rounded-full" style="width:22%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 流入元 -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div class="font-bold text-sm text-gray-800 mb-3">どこから来ているか</div>
+            <!-- ドーナツグラフ風SVG -->
+            <div class="flex items-center gap-4">
+              <svg viewBox="0 0 80 80" class="w-20 h-20 shrink-0">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#e2e8f0" stroke-width="14"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#1a2d5a" stroke-width="14"
+                  stroke-dasharray="75.4 113.1" stroke-dashoffset="-28.3" transform="rotate(-90 40 40)"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#3b82f6" stroke-width="14"
+                  stroke-dasharray="40.8 147.7" stroke-dashoffset="-103.7" transform="rotate(-90 40 40)"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#f59e0b" stroke-width="14"
+                  stroke-dasharray="22.6 166" stroke-dashoffset="-144.5" transform="rotate(-90 40 40)"/>
+                <text x="40" y="44" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">流入元</text>
+              </svg>
+              <div class="space-y-2 text-xs flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background:var(--navy)"></span>
+                  <span class="text-gray-600 flex-1">Google検索</span>
+                  <span class="font-bold" style="color:var(--navy)">40%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
+                  <span class="text-gray-600 flex-1">直接アクセス</span>
+                  <span class="font-bold text-blue-600">22%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-amber-400 shrink-0"></span>
+                  <span class="text-gray-600 flex-1">SNS経由</span>
+                  <span class="font-bold text-amber-600">12%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-gray-300 shrink-0"></span>
+                  <span class="text-gray-600 flex-1">その他</span>
+                  <span class="font-bold text-gray-500">26%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- AIコメント -->
+            <div class="mt-3 p-2.5 rounded-xl text-[10px] leading-relaxed" style="background:#eff6ff;color:#1e40af">
+              <i class="fas fa-lightbulb mr-1 text-amber-500"></i>
+              <strong>アイより：</strong>Google検索からの流入が最多です。「技術・設備」ページへの改善でさらに増やせます！
+            </div>
+          </div>
+        </div>
+
+        <!-- GA設定促進バナー -->
+        <div class="rounded-2xl p-4 border-2 border-dashed border-blue-200 text-center" style="background:#eff6ff">
+          <i class="fas fa-chart-line text-2xl text-blue-400 mb-2 block"></i>
+          <div class="font-bold text-sm text-blue-800 mb-1">実際のデータを見るには</div>
+          <p class="text-xs text-blue-600 mb-3">Googleアナリティクス（無料）を設定するだけで<br>本物のアクセスデータが表示されます。</p>
+          <button onclick="quickSend('Googleアナリティクスの設定方法を教えてください')" class="px-5 py-2 text-xs text-white font-bold rounded-full hover:opacity-90 transition" style="background:var(--navy)">
+            <i class="fas fa-cog mr-1"></i>アイに設定方法を聞く
+          </button>
+        </div>
+
+      </div>
+    </div>
+    <!-- /アクセス解析ダッシュボード -->
 
     <div class="flex justify-center py-5 px-4 flex-1">
       <div id="site-canvas" class="bg-white shadow-xl rounded-t-xl overflow-visible border border-gray-200 transition-all duration-300" style="width:100%;max-width:880px;">
@@ -404,6 +618,10 @@
       <button class="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1.5 rounded-full hover:bg-amber-100 transition" onclick="quickSend('問い合わせを増やしたいです')"><i class="fas fa-search mr-1"></i>問い合わせを増やしたい</button>
       <button class="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1.5 rounded-full hover:bg-amber-100 transition" onclick="quickSend('技術力をうまく伝えたいです')"><i class="fas fa-tools mr-1"></i>技術力を伝えたい</button>
       <button class="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1.5 rounded-full hover:bg-amber-100 transition" onclick="quickSend('採用を強化したいです')"><i class="fas fa-user mr-1"></i>採用を強化したい</button>
+      <div class="w-full border-t border-gray-100 my-1"></div>
+      <button class="text-[10px] text-white px-3 py-1.5 rounded-full hover:opacity-90 transition font-bold w-full" style="background:#7c3aed" onclick="rewriteAll()">
+        <i class="fas fa-magic mr-1"></i>⚡ 全セクションをAIで一括リライト
+      </button>
     </div>
 
     <!-- 入力 -->
@@ -421,6 +639,68 @@
 <footer class="bg-white border-t border-gray-100 py-2 text-center shrink-0">
   <span class="text-[10px] text-gray-300 tracking-wide">監修：前田経営研究所</span>
 </footer>
+
+
+<!-- ========== 確認ダイアログ ========== -->
+<div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black opacity-40" onclick="closeConfirm()"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-80 text-center">
+    <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style="background:#eff6ff">
+      <i class="fas fa-upload text-xl" style="color:var(--navy)"></i>
+    </div>
+    <h3 class="font-black text-gray-900 mb-1" style="font-family:'Noto Serif JP',serif">更新を公開しますか？</h3>
+    <p class="text-xs text-gray-500 mb-5">編集内容がサイトに反映されます。</p>
+    <div class="flex gap-3">
+      <button onclick="closeConfirm()" class="flex-1 py-2 text-sm text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition">キャンセル</button>
+      <button onclick="doPublish()" class="flex-1 py-2 text-sm text-white rounded-xl hover:opacity-90 transition font-bold" style="background:var(--navy)">公開する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 業種選択モーダル ========== -->
+<div id="industry-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black opacity-50"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-96 max-h-[90vh] overflow-y-auto">
+    <div class="text-center mb-5">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-white font-black text-xl shadow" style="background:var(--navy)">S</div>
+      <h3 class="font-black text-lg text-gray-900" style="font-family:'Noto Serif JP',serif">業種を選んでください</h3>
+      <p class="text-xs text-gray-400 mt-1">選んだ業種に合わせてサンプルが切り替わります</p>
+    </div>
+    <div class="grid grid-cols-2 gap-3" id="industry-grid">
+      <div class="industry-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-center" onclick="selectIndustry('mfg')">
+        <div class="text-2xl mb-1">🏭</div>
+        <div class="font-bold text-sm text-gray-800">製造業</div>
+        <div class="text-[10px] text-gray-400 mt-0.5">金属・樹脂・板金など</div>
+      </div>
+      <div class="industry-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-center" onclick="selectIndustry('food')">
+        <div class="text-2xl mb-1">🍽️</div>
+        <div class="font-bold text-sm text-gray-800">飲食・カフェ</div>
+        <div class="text-[10px] text-gray-400 mt-0.5">レストラン・カフェなど</div>
+      </div>
+      <div class="industry-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-center" onclick="selectIndustry('beauty')">
+        <div class="text-2xl mb-1">💄</div>
+        <div class="font-bold text-sm text-gray-800">美容・サロン</div>
+        <div class="text-[10px] text-gray-400 mt-0.5">美容室・エステなど</div>
+      </div>
+      <div class="industry-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-center" onclick="selectIndustry('tax')">
+        <div class="text-2xl mb-1">📊</div>
+        <div class="font-bold text-sm text-gray-800">税理士・士業</div>
+        <div class="text-[10px] text-gray-400 mt-0.5">税理士・行政書士など</div>
+      </div>
+      <div class="industry-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-center" onclick="selectIndustry('build')">
+        <div class="text-2xl mb-1">🏠</div>
+        <div class="font-bold text-sm text-gray-800">建設・工務店</div>
+        <div class="text-[10px] text-gray-400 mt-0.5">工務店・リフォームなど</div>
+      </div>
+      <div class="industry-card border-2 border-gray-100 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition text-center" onclick="selectIndustry('it')">
+        <div class="text-2xl mb-1">💻</div>
+        <div class="font-bold text-sm text-gray-800">IT・Web</div>
+        <div class="text-[10px] text-gray-400 mt-0.5">システム・デザインなど</div>
+      </div>
+    </div>
+    <button onclick="closeIndustryModal()" class="mt-4 w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition">スキップ（製造業のまま使う）</button>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -609,6 +889,13 @@ function activateSec(key) {
   document.getElementById('chips').style.display = 'none';
 
   showToast('📌 ' + def.label);
+
+  // アクセス解析は専用ダッシュボードを中央に表示
+  if (key === 'analytics') {
+    showAnalyticsDashboard();
+  } else {
+    hideAnalyticsDashboard();
+  }
 }
 
 /* =====================================================
@@ -636,6 +923,8 @@ function deactivateCurrent() {
   if (nav) nav.classList.remove('active');
   document.getElementById('where-banner').classList.remove('show');
   currentSec = null;
+  saveToStorage();
+  hideAnalyticsDashboard();
 }
 
 /* =====================================================
@@ -659,41 +948,62 @@ function changeHeroBg(event) {
    プレビュー切替
 ===================================================== */
 let isPreview = false;
+let previewMode = 'pc'; // 'pc' or 'sp'
 
 function togglePreview() {
   isPreview = !isPreview;
   const body = document.body;
-  const bar  = document.getElementById('preview-bar');
-  const btn  = document.querySelector('button[onclick="togglePreview()"]');
+  const bar = document.getElementById('preview-bar');
+  const canvas = document.getElementById('site-canvas');
+  const wrap = document.getElementById('canvas-wrap');
 
   if (isPreview) {
-    // 編集終了
     deactivateCurrent();
-    body.classList.add('preview-mode');
+    previewMode = 'pc';
+    body.classList.add('preview-mode', 'pc-mode');
     bar.classList.add('show');
-    // ヘッダーのプレビューボタンを非表示
-    if (btn) btn.style.display = 'none';
-    // キャンバスをPC幅にリセット
-    document.getElementById('site-canvas').style.maxWidth = '100%';
+    // PC/SPボタンの初期状態
+    updatePreviewBtns('pc');
+    // スクロールを先頭へ
+    wrap.scrollTop = 0;
   } else {
-    body.classList.remove('preview-mode');
+    body.classList.remove('preview-mode', 'pc-mode', 'sp-mode');
     bar.classList.remove('show');
-    if (btn) btn.style.display = '';
-    document.getElementById('site-canvas').style.maxWidth = '880px';
+    // 編集モードのキャンバス幅に戻す
+    canvas.style.maxWidth = '880px';
+    canvas.style.borderRadius = '';
+    canvas.style.overflow = '';
   }
 }
 
 function previewSp() {
-  document.getElementById('site-canvas').style.maxWidth = '390px';
+  if (!isPreview) return;
+  previewMode = 'sp';
+  document.body.classList.remove('pc-mode');
+  document.body.classList.add('sp-mode');
+  document.getElementById('canvas-wrap').scrollTop = 0;
+  updatePreviewBtns('sp');
   showToast('📱 スマートフォン表示');
 }
 
 function previewPc() {
-  document.getElementById('site-canvas').style.maxWidth = '100%';
+  if (!isPreview) return;
+  previewMode = 'pc';
+  document.body.classList.remove('sp-mode');
+  document.body.classList.add('pc-mode');
+  updatePreviewBtns('pc');
   showToast('🖥️ PC表示');
 }
 
-// PC/スマホ切替（編集モード用）
+function updatePreviewBtns(mode) {
+  document.querySelectorAll('#preview-bar .mode-btn').forEach(btn => btn.classList.remove('active'));
+  const target = mode === 'sp'
+    ? document.querySelector('#preview-bar .mode-btn[onclick="previewSp()"]')
+    : document.querySelector('#preview-bar .mode-btn[onclick="previewPc()"]');
+  if (target) target.classList.add('active');
+}
+
+// 編集モード用PC/スマホ切替
 function setPreview(mode) {
   if (mode === 'sp') { document.getElementById('site-canvas').style.maxWidth = '390px'; showToast('📱 スマートフォン表示'); }
   else { document.getElementById('site-canvas').style.maxWidth = '880px'; showToast('🖥️ PC表示'); }
@@ -963,6 +1273,338 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+/* =====================================================
+   ① 公開確認ダイアログ
+===================================================== */
+function confirmPublish() {
+  document.getElementById('confirm-modal').classList.remove('hidden');
+}
+function closeConfirm() {
+  document.getElementById('confirm-modal').classList.add('hidden');
+}
+function doPublish() {
+  closeConfirm();
+  // 公開アニメーション
+  const btn = document.querySelector('button[onclick="confirmPublish()"]');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check mr-1"></i>公開しました！';
+    btn.style.background = '#16a34a';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+    }, 2500);
+  }
+  showToast('🚀 更新を公開しました！');
+  // localStorageにも保存
+  saveToStorage();
+}
+
+/* =====================================================
+   ② localStorage自動保存
+===================================================== */
+const STORAGE_KEY = 'smartpage_i_data';
+
+function saveToStorage() {
+  const data = {};
+  const ids = [
+    'el-sitename','el-nav1','el-nav2','el-nav3','el-nav4',
+    'el-hero-sub','el-hero-title','el-hero-desc','el-hero-btn1','el-hero-btn2',
+    'el-str-title','el-str-sub',
+    'el-str1-t','el-str1-d','el-str2-t','el-str2-d','el-str3-t','el-str3-d',
+    'el-num1','el-num1-l','el-num2','el-num2-l','el-num3','el-num3-l','el-num4','el-num4-l',
+    'el-cta-label','el-cta-title','el-cta-desc','el-cta-btn'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.textContent;
+  });
+  // ヒーロー背景画像
+  const heroBg = document.getElementById('hero-bg-div');
+  if (heroBg) data['hero-bg'] = heroBg.style.backgroundImage || '';
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    Object.entries(data).forEach(([id, val]) => {
+      if (id === 'hero-bg') {
+        const el = document.getElementById('hero-bg-div');
+        if (el && val) { el.style.backgroundImage = val; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+      } else {
+        const el = document.getElementById(id);
+        if (el && val) el.textContent = val;
+      }
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// 3秒ごとに自動保存
+setInterval(saveToStorage, 3000);
+
+// 編集終了時の保存はdeactivateCurrent内で直接呼び出し（末尾参照）
+
+/* =====================================================
+   ③ 一発リライト（全セクション一括）
+===================================================== */
+async function rewriteAll() {
+  document.getElementById('chips').style.display = 'none';
+
+  addAiMsg('一括リライトを開始します✨ 御社の情報を教えてください。');
+
+  // ヒアリングチップを表示
+  const c = document.getElementById('chat-box');
+  c.insertAdjacentHTML('beforeend', `
+    <div class="flex gap-2 max-w-[95%]" id="rewrite-chips">
+      <div class="w-7 h-7 shrink-0"></div>
+      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3 py-2.5 text-xs text-gray-700 w-full">
+        <div class="font-bold mb-2 text-gray-800">会社の基本情報を入力してください</div>
+        <div class="flex flex-col gap-2">
+          <input id="rw-company" type="text" placeholder="会社名（例：山田製作所）" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+          <input id="rw-business" type="text" placeholder="事業内容（例：金属精密加工・板金加工）" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+          <input id="rw-strength" type="text" placeholder="一番の強み（例：短納期・高精度・ISO取得）" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+          <input id="rw-years" type="text" placeholder="創業年数・実績（例：創業40年・取引先200社）" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+          <button onclick="execRewriteAll()" class="w-full py-2 text-white text-xs font-bold rounded-xl hover:opacity-90 transition mt-1" style="background:#7c3aed">
+            <i class="fas fa-magic mr-1"></i>このまま全部書き直す
+          </button>
+        </div>
+      </div>
+    </div>
+  `);
+  scrollChat();
+}
+
+async function execRewriteAll() {
+  const company  = document.getElementById('rw-company')?.value.trim() || '御社';
+  const business = document.getElementById('rw-business')?.value.trim() || '製造業';
+  const strength = document.getElementById('rw-strength')?.value.trim() || '高品質・短納期';
+  const years    = document.getElementById('rw-years')?.value.trim() || '';
+
+  // ヒアリングフォームを非表示
+  const rc = document.getElementById('rewrite-chips');
+  if (rc) rc.remove();
+
+  addUserBubble(`会社名：${company}／事業：${business}／強み：${strength}／${years}`);
+
+  const jsonGuide = '```json ... ```';
+  const prompt = [
+    '以下の会社情報をもとに、ホームページの全セクションのテキストを書き直してください。',
+    '',
+    '会社名：' + company,
+    '事業内容：' + business,
+    '一番の強み：' + strength,
+    '創業・実績：' + years,
+    '',
+    '各要素に自然で魅力的な日本語テキストを生成し、必ず以下のJSON形式だけで返してください。',
+    'キャッチコピーは力強く短く。説明文は温かみある文体で。ボタンは行動を促す言葉で。',
+    '',
+    '```json',
+    '{',
+    '  "applies": [',
+    '    {"label":"会社名","elId":"el-sitename","text":"..."},',
+    '    {"label":"キャッチコピー","elId":"el-hero-title","text":"..."},',
+    '    {"label":"サブコピー","elId":"el-hero-sub","text":"..."},',
+    '    {"label":"実績紹介","elId":"el-hero-desc","text":"..."},',
+    '    {"label":"ボタン1","elId":"el-hero-btn1","text":"..."},',
+    '    {"label":"ボタン2","elId":"el-hero-btn2","text":"..."},',
+    '    {"label":"強みタイトル","elId":"el-str-title","text":"..."},',
+    '    {"label":"強みサブ","elId":"el-str-sub","text":"..."},',
+    '    {"label":"強み1タイトル","elId":"el-str1-t","text":"..."},',
+    '    {"label":"強み1説明","elId":"el-str1-d","text":"..."},',
+    '    {"label":"強み2タイトル","elId":"el-str2-t","text":"..."},',
+    '    {"label":"強み2説明","elId":"el-str2-d","text":"..."},',
+    '    {"label":"強み3タイトル","elId":"el-str3-t","text":"..."},',
+    '    {"label":"強み3説明","elId":"el-str3-d","text":"..."},',
+    '    {"label":"CTAタイトル","elId":"el-cta-title","text":"..."},',
+    '    {"label":"CTA説明","elId":"el-cta-desc","text":"..."},',
+    '    {"label":"CTAボタン","elId":"el-cta-btn","text":"..."}',
+    '  ]',
+    '}',
+    '```'
+  ].join('\n');
+
+  const tid = showTyping();
+  const result = await callWorker(prompt);
+  removeTyping(tid);
+  addAiMsg(result.text || '全セクションを書き直しました！✨', result.applyTargets);
+  saveToStorage();
+}
+
+/* =====================================================
+   ④ 業種選択（初回起動 & モーダル）
+===================================================== */
+const INDUSTRY_CONTENT = {
+  mfg: {
+    name: '製造業', badge: '🏭',
+    sitename: 'サンプル製造株式会社',
+    heroSub: 'Since 1985 | Precision Manufacturing',
+    heroTitle: '精密加工の技術で、ものづくりの未来を支える。',
+    heroDesc: 'ISO9001認証取得 ／ 納期遵守率99.2% ／ 取引先200社超',
+    heroBtn1: '製品・加工事例を見る', heroBtn2: 'お見積もり依頼',
+    strTitle: '私たちの強み', strSub: '40年の経験が生み出す、確かな品質と技術力',
+    str1t: '精密加工技術', str1d: '公差±0.01mmの高精度加工。全数検査で品質を保証します。',
+    str2t: '短納期対応', str2d: '最短3日出荷。急ぎの試作・量産にも柔軟に対応。',
+    str3t: '一貫生産体制', str3d: '設計から加工・検査・納品まで、ワンストップで対応。',
+    ctaTitle: 'お見積もり・ご相談はお気軽に', ctaDesc: '図面をお送りいただければ2営業日以内にお見積もりします。', ctaBtn: '今すぐ無料相談・お見積もり依頼',
+    navBg: '#eff6ff', aiGreet: '製造業のサンプルをセットしました🏭 まずキャッチコピーから変えてみましょうか？'
+  },
+  food: {
+    name: '飲食・カフェ', badge: '🍽️',
+    sitename: 'サンプルカフェ＆レストラン',
+    heroSub: 'Open Daily 11:00 - 22:00',
+    heroTitle: 'ゆっくりと、おいしい時間を。',
+    heroDesc: '地元食材にこだわった料理 ／ 完全個室あり ／ ランチ・ディナー営業',
+    heroBtn1: 'メニューを見る', heroBtn2: '予約する',
+    strTitle: '当店のこだわり', strSub: '素材・空間・おもてなし、すべてに心を込めています',
+    str1t: '地元食材100%', str1d: '地域の農家と直接契約。新鮮でおいしい食材だけを使います。',
+    str2t: 'プライベート空間', str2d: '完全個室完備。デートから会食まで幅広くご利用いただけます。',
+    str3t: '本格シェフの味', str3d: '一流ホテル出身のシェフが一皿一皿丁寧に仕上げます。',
+    ctaTitle: 'ご予約はお気軽に', ctaDesc: 'お電話またはWebから24時間ご予約いただけます。', ctaBtn: '今すぐ予約する',
+    navBg: '#fef9c3', aiGreet: '飲食・カフェのサンプルをセットしました🍽️ お店の雰囲気や一番の料理を教えてください！'
+  },
+  beauty: {
+    name: '美容・サロン', badge: '💄',
+    sitename: 'Beauty Salon サンプル',
+    heroSub: 'Hair & Nail & Eyelash',
+    heroTitle: 'あなたらしい美しさを、\nここから始めよう。',
+    heroDesc: '経験10年以上のスタイリスト ／ 完全予約制 ／ 駅徒歩1分',
+    heroBtn1: 'メニュー・料金を見る', heroBtn2: '無料カウンセリング予約',
+    strTitle: '当サロンの特徴', strSub: 'あなたの「なりたい」を全力でサポートします',
+    str1t: '完全マンツーマン', str1d: '担当者が変わらないので、毎回ゼロから説明不要。あなたの好みを熟知しています。',
+    str2t: '髪へのやさしさ重視', str2d: '低ダメージ・高品質な薬剤を厳選。艶やかで健康的な髪を保ちます。',
+    str3t: '駅チカ＆完全予約制', str3d: '待ち時間ゼロ。お子様連れも歓迎です。',
+    ctaTitle: '初回カウンセリング無料', ctaDesc: 'お気軽にご相談ください。あなたに合うスタイルをご提案します。', ctaBtn: '今すぐ予約する',
+    navBg: '#fdf2f8', aiGreet: '美容サロンのサンプルをセットしました💄 どんなお客様に来てほしいですか？'
+  },
+  tax: {
+    name: '税理士・士業', badge: '📊',
+    sitename: 'サンプル税理士事務所',
+    heroSub: 'Tax & Accounting Office',
+    heroTitle: '数字の不安を、\n安心に変えるパートナー。',
+    heroDesc: '創業支援から相続まで ／ 初回相談無料 ／ オンライン対応可',
+    heroBtn1: 'サービス内容を見る', heroBtn2: '無料相談を予約する',
+    strTitle: '選ばれる3つの理由', strSub: '中小企業・個人事業主の頼れる経営パートナー',
+    str1t: 'わかりやすい説明', str1d: '専門用語を使わず、数字の意味をやさしくお伝えします。',
+    str2t: 'スピード対応', str2d: 'お問い合わせから24時間以内にご連絡。決算も納期厳守です。',
+    str3t: 'オンライン対応可', str3d: 'Zoom・LINE・メールで全国対応。訪問不要で完結します。',
+    ctaTitle: 'まず無料相談から', ctaDesc: '税務・会計・起業・相続など、どんなことでもお気軽にご相談ください。', ctaBtn: '無料相談を予約する（オンライン可）',
+    navBg: '#f0fdf4', aiGreet: '税理士事務所のサンプルをセットしました📊 得意な業種や強みを教えてください！'
+  },
+  build: {
+    name: '建設・工務店', badge: '🏠',
+    sitename: 'サンプル工務店',
+    heroSub: 'Local Builder Since 1990',
+    heroTitle: '地元に根ざした30年。\n家族の笑顔のために建てる。',
+    heroDesc: '新築・リフォーム・外構 ／ 地域密着 ／ アフターサービス充実',
+    heroBtn1: '施工事例を見る', heroBtn2: '無料相談・見積もり',
+    strTitle: '選ばれる理由', strSub: '地域のお客様に長く愛される工務店であり続けるために',
+    str1t: '地元密着30年', str1d: '地域の気候・地盤を知り尽くしたプロが、長く住める家を建てます。',
+    str2t: '適正価格と透明性', str2d: '見積もりは明細まで開示。納得いただいてから着工します。',
+    str3t: '充実のアフター', str3d: '引渡し後も定期点検・修繕対応。一生涯のパートナーです。',
+    ctaTitle: 'まずはお気軽にご相談を', ctaDesc: '土地探しから設計・施工・アフターまで、全てお任せください。', ctaBtn: '無料相談・お見積もりはこちら',
+    navBg: '#fff7ed', aiGreet: '工務店のサンプルをセットしました🏠 どんな家づくりが得意ですか？'
+  },
+  it: {
+    name: 'IT・Web', badge: '💻',
+    sitename: 'サンプル株式会社（IT）',
+    heroSub: 'System Development & Web Design',
+    heroTitle: 'テクノロジーで、\nビジネスの未来をひらく。',
+    heroDesc: 'システム開発 ／ Web制作 ／ DX支援 ／ 上場企業実績多数',
+    heroBtn1: '実績・事例を見る', heroBtn2: '無料相談する',
+    strTitle: '私たちにできること', strSub: '小規模から大規模まで、最適なシステムを提供します',
+    str1t: '要件定義から運用まで', str1d: '上流工程から保守・運用まで一貫対応。丸投げOKです。',
+    str2t: 'アジャイル開発', str2d: '小さく作って素早く改善。無駄なコストをかけません。',
+    str3t: '伴走型サポート', str3d: 'リリース後も専任担当がサポート。困ったときすぐ相談できます。',
+    ctaTitle: 'まず話を聞かせてください', ctaDesc: '要件が曖昧でも大丈夫。一緒に整理するところから始めます。', ctaBtn: '無料相談・お問い合わせ',
+    navBg: '#f0f9ff', aiGreet: 'IT・Web企業のサンプルをセットしました💻 どんな技術・サービスが得意ですか？'
+  }
+};
+
+function showIndustryModal() {
+  document.getElementById('industry-modal').classList.remove('hidden');
+}
+function closeIndustryModal() {
+  document.getElementById('industry-modal').classList.add('hidden');
+}
+
+function selectIndustry(key) {
+  const d = INDUSTRY_CONTENT[key];
+  if (!d) return;
+  closeIndustryModal();
+
+  // テキストを一括セット
+  const map = {
+    'el-sitename': d.sitename,
+    'el-hero-sub': d.heroSub,
+    'el-hero-title': d.heroTitle,
+    'el-hero-desc': d.heroDesc,
+    'el-hero-btn1': d.heroBtn1,
+    'el-hero-btn2': d.heroBtn2,
+    'el-str-title': d.strTitle,
+    'el-str-sub': d.strSub,
+    'el-str1-t': d.str1t, 'el-str1-d': d.str1d,
+    'el-str2-t': d.str2t, 'el-str2-d': d.str2d,
+    'el-str3-t': d.str3t, 'el-str3-d': d.str3d,
+    'el-cta-title': d.ctaTitle,
+    'el-cta-desc': d.ctaDesc,
+    'el-cta-btn': d.ctaBtn,
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+
+  // バッジ更新
+  document.getElementById('site-name-badge').textContent = d.sitename + ' 様';
+
+  // AI挨拶を更新
+  document.getElementById('ai-status').textContent = d.badge + ' ' + d.name + 'モード';
+
+  // アイが話しかける
+  addAiMsg(d.aiGreet);
+  document.getElementById('chips').style.display = 'none';
+
+  saveToStorage();
+  showToast(d.badge + ' ' + d.name + 'のサンプルに切り替えました！');
+}
+
+// 初回起動時に業種選択を表示
+window.addEventListener('DOMContentLoaded', () => {
+  // 保存データがあれば復元
+  const restored = loadFromStorage();
+  if (!restored) {
+    // 初回は業種選択を表示
+    setTimeout(() => showIndustryModal(), 600);
+  } else {
+    showToast('✅ 前回の編集内容を復元しました');
+  }
+});
+
+
+/* =====================================================
+   アクセス解析ダッシュボード
+===================================================== */
+function showAnalyticsDashboard() {
+  const dashboard = document.getElementById('analytics-dashboard');
+  const canvasWrap = document.querySelector('#canvas-wrap > .flex');
+  if (dashboard) dashboard.classList.remove('hidden');
+  if (canvasWrap) canvasWrap.classList.add('hidden');
+  // バナーテキストを更新
+  document.getElementById('where-text').textContent = 'アクセス解析レポートを表示中（サンプルデータ）';
+}
+
+function hideAnalyticsDashboard() {
+  const dashboard = document.getElementById('analytics-dashboard');
+  const canvasWrap = document.querySelector('#canvas-wrap > .flex');
+  if (dashboard) dashboard.classList.add('hidden');
+  if (canvasWrap) canvasWrap.classList.remove('hidden');
+}
+
 </script>
 </body>
 </html>
