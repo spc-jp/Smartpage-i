@@ -372,9 +372,9 @@
       <div class="flex gap-2 max-w-[95%]">
         <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0" style="background:var(--navy)">I</div>
         <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3 py-2.5 text-xs text-gray-700 leading-relaxed">
-          こんにちは😊 Webコンサルタントのアイです。<br><br>
-          <strong>中央のセクションをクリック</strong>すると、左のメニューが光って、私がそのセクションのお手伝いをします。<br><br>
-          「キャッチコピーをもっと力強くして」「採用ページの文章を作って」など、言葉で伝えるだけでOKです！
+          こんにちは！アイです😊<br><br>
+          編集したい場所をクリックしてみてください。<br>
+          あとは私に話しかけるだけでOKですよ！
         </div>
       </div>
     </div>
@@ -417,7 +417,7 @@ const SEC_DEF = {
   header: {
     navId: 'nav-header',
     label: 'ヘッダー編集中',
-    aiGreet: 'ヘッダーを選びましたね✏️\n\n会社名・ナビゲーションメニューを変更できます。\n\n「会社名をこうしたい」「メニューにこの項目を追加したい」など、教えてください！\nAIが文章を提案して、ボタン一つでページに反映できますよ。',
+    aiGreet: 'ヘッダーですね✏️\n会社名やメニューを変えられますよ。\nどこを直したいですか？',
     targets: {
       '会社名': 'el-sitename',
       'メニュー1': 'el-nav1',
@@ -429,7 +429,7 @@ const SEC_DEF = {
   hero: {
     navId: 'nav-hero',
     label: 'ヒーロー編集中',
-    aiGreet: 'ヒーローセクションですね🎯\n\nキャッチコピー・サブコピー・ボタン文言を変更できます。\n\n「もっと力強いコピーにして」「製造業らしい表現で」「短納期が強みだから入れたい」など、どんどん教えてください！',
+    aiGreet: 'キャッチコピーのところですね🎯\n御社の一番の強みを一言で言うと何ですか？',
     targets: {
       'サブコピー': 'el-hero-sub',
       'キャッチコピー': 'el-hero-title',
@@ -441,7 +441,7 @@ const SEC_DEF = {
   strengths: {
     navId: 'nav-strengths',
     label: '強み・特長 編集中',
-    aiGreet: '強み・特長セクションです⭐\n\n3つの強みの見出し・説明文を変更できます。\n\n「うちの一番の強みは〇〇です」「もっと技術的な表現にして」と伝えてもらえれば、私がプロの文章を作ります！',
+    aiGreet: '強みのセクションですね⭐\nお客様によく言われる「うちの良さ」って何ですか？',
     targets: {
       'セクションタイトル': 'el-str-title',
       'サブタイトル': 'el-str-sub',
@@ -456,7 +456,7 @@ const SEC_DEF = {
   numbers: {
     navId: 'nav-numbers',
     label: '実績数字 編集中',
-    aiGreet: '実績数字セクションですね📊\n\n取引先数・納期遵守率・創業年数・認証などの数字を変更できます。\n\n「実際の数字はこうです」と教えてもらえれば、インパクトのある表現に整えます！',
+    aiGreet: '実績の数字ですね📊\n取引先数や創業年数など、実際の数字を教えてください！',
     targets: {
       '実績1': 'el-num1',
       '実績1ラベル': 'el-num1-l',
@@ -471,7 +471,7 @@ const SEC_DEF = {
   cta: {
     navId: 'nav-cta',
     label: 'お問い合わせ 編集中',
-    aiGreet: 'お問い合わせセクションです📩\n\nCTAの見出し・説明文・ボタン文言を変更できます。\n\n「もっと問い合わせしやすい文章にして」「製造業の取引先向けに書き直して」など、気軽に伝えてください！',
+    aiGreet: 'お問い合わせボタンですね📩\nどんなお客様に来てほしいですか？',
     targets: {
       'ラベル': 'el-cta-label',
       'タイトル': 'el-cta-title',
@@ -482,31 +482,31 @@ const SEC_DEF = {
   gallery: {
     navId: 'nav-gallery',
     label: '技術ギャラリー',
-    aiGreet: '技術ギャラリーの設定ですね🏭\n\n製造業の最大の武器は「技術力の見せる化」です！\n\n今どんな加工・製品を扱っていますか？\n金属加工・樹脂成形・板金・食品製造など教えていただければ、ギャラリーページの構成と文章を一緒に作ります！',
+    aiGreet: '技術ギャラリーですね🏭\n今どんな加工や製品を扱っていますか？',
     targets: {}
   },
   dl: {
     navId: 'nav-dl',
     label: '資料DL設定',
-    aiGreet: '資料ダウンロードの設定ですね📄\n\nBtoB製造業では、カタログ・設備一覧・品質保証書などのPDF提供が商談化率を大きく上げます。\n\n今、どんな資料を用意していますか？\nまたは「何を用意すべきか」も一緒に考えましょう！',
+    aiGreet: '資料ダウンロードですね📄\nお客様によく渡す資料はどんなものですか？',
     targets: {}
   },
   recruit: {
     navId: 'nav-recruit',
     label: '採用ページ',
-    aiGreet: '採用ページの設定ですね👷\n\n製造業の採用で効果が高いのは「工場の雰囲気動画」と「Indeed自動連携」です。\n\n今、どんな職種を募集していますか？\n職種・給与・特徴を教えてもらえれば、求人ページの文章をすぐに作れますよ！',
+    aiGreet: '採用ページですね👷\n今、どんな人を募集していますか？',
     targets: {}
   },
   private: {
     navId: 'nav-private',
     label: '取引先専用',
-    aiGreet: '取引先専用ページですね🔒\n\nパスワード付きの限定ページに仕様書・図面・納品書などを置けます。メール添付の手間がゼロになります。\n\n今、取引先とのやりとりでよく送る資料はどんなものですか？',
+    aiGreet: '取引先専用ページですね🔒\n取引先によく送る資料は何ですか？',
     targets: {}
   },
   analytics: {
     navId: 'nav-analytics',
     label: 'アクセス解析',
-    aiGreet: 'アクセス解析の確認ですね📊\n\n製造業で特に重要なのは「製品ページの閲覧数」と「問い合わせページへの動線」です。\n\n現在Googleアナリティクスは設定済みですか？\nまだであれば、設定手順も一緒に確認しましょう！',
+    aiGreet: 'アクセス解析ですね📊\nGoogleアナリティクスはもう設定してありますか？',
     targets: {}
   }
 };
@@ -830,7 +830,7 @@ function resetAll() {
     <div class="flex gap-2 max-w-[95%]">
       <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0" style="background:var(--navy)">I</div>
       <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3 py-2.5 text-xs text-gray-700 leading-relaxed">
-        リセットしました😊 中央のセクションをクリックして編集を始めましょう！
+        リセットしました😊<br>編集したい場所をクリックしてみてください！
       </div>
     </div>`;
   document.getElementById('chips').style.display = '';
