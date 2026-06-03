@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smartpage I - ホームページ制作 & AIナビゲーター</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a2d5a'/><text x='16' y='23' text-anchor='middle' font-family='Arial Black,sans-serif' font-weight='900' font-size='20' fill='white'>S</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a2d5a'/><text x='16' y='23' text-anchor='middle' font-family='Arial Black,sans-serif' font-weight='900' font-size='20' fill='%23c49a00'>S</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -12,502 +12,612 @@
     :root {
       --navy: #1a2d5a;
       --gold: #c49a00;
-      --blue-main: #2563eb;
-      --green-save: #16a34a;
+      --blue: #2563eb;
+      --green: #16a34a;
     }
-
     body { font-family: 'Noto Sans JP', sans-serif; }
 
-    /* ========== 見たまま編集 ========== */
-    .editable-section {
-      position: relative;
-      border: 2px solid transparent;
-      transition: border-color 0.2s, background 0.2s;
+    /* ===== 左サイドバー ===== */
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 18px; font-size: 13px; color: #6b7280;
+      cursor: pointer; border-right: 3px solid transparent;
+      border-radius: 0 9999px 9999px 0; margin-right: 10px;
+      transition: all 0.2s;
     }
-    .editable-section:hover { border-color: var(--blue-main); }
-    .editable-section.is-editing {
-      border-color: var(--green-save) !important;
-      background: rgba(22,163,74,0.03);
+    .nav-item:hover { background: #f8fafc; color: #1e293b; }
+    .nav-item.active {
+      background: #fffbeb;
+      color: #92400e;
+      border-right-color: var(--gold);
+      font-weight: 700;
     }
-    .edit-toolbar {
-      display: none;
-      position: absolute;
-      top: 0; right: 0;
-      z-index: 20;
-      background: var(--blue-main);
-      border-bottom-left-radius: 8px;
-      padding: 4px 10px;
-      gap: 6px;
-      align-items: center;
-    }
-    .editable-section:hover .edit-toolbar,
-    .editable-section.is-editing .edit-toolbar { display: flex; }
-    .editable-section.is-editing .edit-toolbar { background: var(--green-save); }
+    .nav-item.active .nav-icon { color: var(--gold); }
 
-    .edit-toolbar button {
-      color: white;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.2);
-      border: none;
+    /* ===== 中央セクション ===== */
+    .sec {
+      position: relative;
+      border: 3px solid transparent;
       cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .sec:hover { border-color: #93c5fd; }
+    .sec.active-sec {
+      border-color: var(--blue) !important;
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+    }
+
+    /* セクションラベル（クリックで出る） */
+    .sec-label {
+      display: none;
+      position: absolute; top: 0; left: 0;
+      background: var(--blue); color: white;
+      font-size: 10px; font-weight: 700;
+      padding: 3px 10px; border-bottom-right-radius: 8px;
+      z-index: 20; gap: 5px; align-items: center;
       white-space: nowrap;
     }
-    .edit-toolbar button:hover { background: rgba(255,255,255,0.35); }
+    .sec.active-sec .sec-label { display: flex; }
 
+    /* ホバー時のヒント */
+    .sec-hint {
+      display: none;
+      position: absolute; top: 0; right: 0;
+      background: rgba(37,99,235,0.85); color: white;
+      font-size: 10px; padding: 3px 10px;
+      border-bottom-left-radius: 8px; z-index: 15;
+    }
+    .sec:hover .sec-hint { display: block; }
+    .sec.active-sec .sec-hint { display: none; }
+
+    /* contenteditable */
     [contenteditable="true"] {
       outline: 2px dashed rgba(37,99,235,0.5);
-      outline-offset: 2px;
-      border-radius: 2px;
-      cursor: text;
-      min-width: 20px;
-      min-height: 1em;
+      outline-offset: 2px; border-radius: 2px; cursor: text;
+      min-width: 20px; min-height: 1em;
     }
     [contenteditable="true"]:focus {
-      outline: 2px solid var(--green-save);
-      background: rgba(255,255,255,0.85);
+      outline: 2px solid var(--green);
+      background: rgba(255,255,255,0.9);
     }
 
     /* カラーパネル */
     .color-panel {
-      display: none;
-      position: absolute;
-      top: 32px; right: 0;
-      z-index: 30;
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      min-width: 200px;
+      display: none; position: absolute;
+      top: 28px; left: 0; z-index: 30;
+      background: white; border: 1px solid #e5e7eb;
+      border-radius: 10px; padding: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 200px;
     }
     .color-panel.open { display: block; }
-    .color-swatch {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: transform 0.15s, border-color 0.15s;
-      display: inline-block;
+    .swatch {
+      width: 22px; height: 22px; border-radius: 50%;
+      cursor: pointer; border: 2px solid transparent;
+      display: inline-block; transition: transform 0.15s;
     }
-    .color-swatch:hover { transform: scale(1.2); border-color: #94a3b8; }
+    .swatch:hover { transform: scale(1.25); border-color: #94a3b8; }
 
-    /* 画像アップロードオーバーレイ */
+    /* 画像オーバーレイ */
     .img-overlay {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 15;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+      display: none; position: absolute; inset: 0;
+      background: rgba(0,0,0,0.4); z-index: 15;
+      align-items: center; justify-content: center; cursor: pointer;
     }
-    .editable-section.is-editing .img-overlay { display: flex; }
+    .sec.active-sec .img-overlay { display: flex; }
 
-    /* スクロールバー */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
-    /* チャット Markdown */
-    .ai-msg p { margin-bottom: 0.6em; }
-    .ai-msg ul { list-style: disc; padding-left: 1.4em; margin-bottom: 0.6em; }
-    .ai-msg li { margin-bottom: 0.3em; }
+    /* ===== 右パネル ===== */
+    .ai-msg p { margin-bottom: 0.5em; }
+    .ai-msg ul { list-style: disc; padding-left: 1.3em; margin-bottom: 0.5em; }
+    .ai-msg li { margin-bottom: 0.25em; }
     .ai-msg strong { color: #1e40af; }
-
-    /* セクション見出し装飾 */
-    .section-header {
-      display: flex; align-items: center; gap: 6px;
-      font-weight: 700; font-size: 13px;
-      padding: 4px 0 6px;
-      border-bottom: 1px solid #dbeafe;
-      margin-bottom: 8px; margin-top: 12px;
-      color: #1e40af;
+    .sec-hdr {
+      display: flex; align-items: center; gap: 5px;
+      font-weight: 700; font-size: 11px;
+      padding: 3px 0 5px; border-bottom: 1px solid #dbeafe;
+      margin: 10px 0 6px; color: #1e40af;
     }
-    .section-header:first-child { margin-top: 0; }
+    .sec-hdr:first-child { margin-top: 0; }
 
-    /* トースト通知 */
-    #toast {
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #1e293b; color: white;
-      padding: 10px 20px; border-radius: 24px;
-      font-size: 13px; z-index: 9999;
-      transition: transform 0.3s ease;
-      pointer-events: none;
+    /* 反映ボタン */
+    .apply-wrap { margin-top: 8px; }
+    .apply-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; background: var(--navy); color: white;
+      border-radius: 20px; font-size: 10px; font-weight: 700;
+      cursor: pointer; border: none; transition: opacity 0.2s;
+      margin-top: 4px; margin-right: 4px;
     }
-    #toast.show { transform: translateX(-50%) translateY(0); }
+    .apply-btn:hover { opacity: 0.85; }
+    .apply-btn.sub {
+      background: white; color: var(--navy);
+      border: 1px solid var(--navy);
+    }
 
-    /* タイピングドット */
-    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+    /* タイピング */
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40% { transform: translateY(-4px); }
+    }
     .dot { animation: bounce 1.2s infinite; display: inline-block; }
     .dot:nth-child(2) { animation-delay: 0.15s; }
     .dot:nth-child(3) { animation-delay: 0.3s; }
 
-    /* ヒーローセクション */
+    /* トースト */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #0f172a; color: white;
+      padding: 8px 18px; border-radius: 24px;
+      font-size: 12px; z-index: 9999;
+      transition: transform 0.3s; pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ヒーロー */
     .hero-bg {
       background-image: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
-      background-size: cover;
-      background-position: center;
+      background-size: cover; background-position: center;
     }
 
-    /* 入力エリア */
-    #chat-input { transition: border-color 0.2s; }
-    #chat-input:focus { border-color: var(--blue-main); outline: none; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    /* 現在地バナー */
+    #where-banner {
+      background: #fffbeb; border-bottom: 1px solid #fde68a;
+      padding: 5px 14px; font-size: 11px; color: #92400e;
+      font-weight: 600; display: none; align-items: center; gap: 6px;
+    }
+    #where-banner.show { display: flex; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    #chat-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); border-color: var(--blue); }
   </style>
 </head>
 <body class="bg-slate-100 h-screen flex flex-col overflow-hidden text-gray-800">
 
-<!-- ========== ヘッダー ========== -->
+<!-- ヘッダー -->
 <header class="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-5 shrink-0 z-10 shadow-sm">
   <div class="flex items-center gap-2.5">
-    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg shadow" style="background: var(--navy)">S</div>
-    <span class="text-lg font-black tracking-tight text-gray-900">Smartpage <span style="color: var(--blue-main)">I</span></span>
-    <span class="ml-3 px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-100 font-medium" id="editing-label">編集中: サンプル製造株式会社 様</span>
+    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg shadow" style="background:var(--navy)">S</div>
+    <span class="text-lg font-black tracking-tight">Smartpage <span style="color:var(--blue)">I</span></span>
+    <span class="ml-3 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs rounded-full border border-amber-200 font-medium" id="site-name-badge">サンプル製造株式会社 様</span>
   </div>
   <div class="flex items-center gap-3">
-    <button title="PC表示" onclick="setPreviewMode('pc')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" id="btn-pc">
-      <i class="fas fa-desktop text-sm"></i>
-    </button>
-    <button title="スマホ表示" onclick="setPreviewMode('sp')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" id="btn-sp">
-      <i class="fas fa-mobile-alt text-sm"></i>
-    </button>
-    <div class="w-px h-6 bg-gray-200 mx-1"></div>
-    <button class="px-3.5 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition" onclick="showToast('プレビューモード（デモ）')">プレビュー</button>
-    <button class="px-3.5 py-1.5 text-sm text-white rounded-lg shadow-sm transition hover:opacity-90" style="background: var(--navy)" onclick="showToast('✅ 更新を公開しました！')">更新を公開</button>
+    <button onclick="setPreview('pc')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" title="PC表示"><i class="fas fa-desktop text-sm"></i></button>
+    <button onclick="setPreview('sp')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" title="スマホ表示"><i class="fas fa-mobile-alt text-sm"></i></button>
+    <div class="w-px h-5 bg-gray-200"></div>
+    <button class="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition" onclick="showToast('プレビューモード（デモ）')">プレビュー</button>
+    <button class="px-3 py-1.5 text-sm text-white rounded-lg shadow-sm hover:opacity-90 transition" style="background:var(--navy)" onclick="showToast('✅ 公開しました！')">更新を公開</button>
   </div>
 </header>
 
-<!-- ========== メインコンテンツ ========== -->
 <div class="flex-1 flex overflow-hidden">
 
   <!-- 左サイドバー -->
-  <aside class="w-56 bg-white border-r border-gray-200 flex flex-col shrink-0">
-    <nav class="flex-1 overflow-y-auto py-4 text-sm">
-      <div class="px-4 mb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">基本操作</div>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 font-medium rounded-r-full mr-3" style="background:#eff6ff; color: var(--blue-main); border-right: 3px solid var(--blue-main)">
-        <i class="fas fa-file-alt w-4 text-center"></i> ページ編集
-      </a>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-sitemap w-4 text-center"></i> 構成・メニュー
-      </a>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-paint-roller w-4 text-center"></i> デザイン設定
-      </a>
+  <aside class="w-52 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <nav class="flex-1 overflow-y-auto py-3">
 
-      <div class="px-4 mt-5 mb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">製造業向け機能</div>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-industry w-4 text-center text-blue-500"></i> 技術ギャラリー
-      </a>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-file-download w-4 text-center text-indigo-500"></i> 資料DL設定
-      </a>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-briefcase w-4 text-center text-orange-500"></i> 採用（Indeed連携）
-      </a>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-lock w-4 text-center text-purple-500"></i> 取引先専用ページ
-      </a>
+      <div class="px-4 mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">基本操作</div>
+      <div class="nav-item" id="nav-header" onclick="onNav('header')">
+        <i class="fas fa-heading nav-icon w-4 text-center"></i>ヘッダー
+      </div>
+      <div class="nav-item" id="nav-hero" onclick="onNav('hero')">
+        <i class="fas fa-image nav-icon w-4 text-center"></i>ヒーロー
+      </div>
+      <div class="nav-item" id="nav-strengths" onclick="onNav('strengths')">
+        <i class="fas fa-star nav-icon w-4 text-center"></i>強み・特長
+      </div>
+      <div class="nav-item" id="nav-numbers" onclick="onNav('numbers')">
+        <i class="fas fa-chart-bar nav-icon w-4 text-center"></i>実績数字
+      </div>
+      <div class="nav-item" id="nav-cta" onclick="onNav('cta')">
+        <i class="fas fa-envelope nav-icon w-4 text-center"></i>お問い合わせ
+      </div>
 
-      <div class="px-4 mt-5 mb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">分析・改善</div>
-      <a href="#" class="flex items-center gap-3 px-5 py-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition rounded-r-full mr-3">
-        <i class="fas fa-chart-line w-4 text-center text-green-500"></i> アクセス解析
-      </a>
+      <div class="px-4 mt-4 mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">製造業向け機能</div>
+      <div class="nav-item" id="nav-gallery" onclick="onNav('gallery')">
+        <i class="fas fa-industry nav-icon w-4 text-center text-blue-400"></i>技術ギャラリー
+      </div>
+      <div class="nav-item" id="nav-dl" onclick="onNav('dl')">
+        <i class="fas fa-file-download nav-icon w-4 text-center text-indigo-400"></i>資料DL設定
+      </div>
+      <div class="nav-item" id="nav-recruit" onclick="onNav('recruit')">
+        <i class="fas fa-briefcase nav-icon w-4 text-center text-orange-400"></i>採用ページ
+      </div>
+      <div class="nav-item" id="nav-private" onclick="onNav('private')">
+        <i class="fas fa-lock nav-icon w-4 text-center text-purple-400"></i>取引先専用
+      </div>
+
+      <div class="px-4 mt-4 mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">分析</div>
+      <div class="nav-item" id="nav-analytics" onclick="onNav('analytics')">
+        <i class="fas fa-chart-line nav-icon w-4 text-center text-green-500"></i>アクセス解析
+      </div>
     </nav>
-    <div class="p-4 border-t border-gray-100">
-      <div class="text-[10px] text-gray-400 text-center">Powered by Smartpage I</div>
-    </div>
+    <div class="p-3 border-t border-gray-100 text-center text-[10px] text-gray-300">Powered by Smartpage I</div>
   </aside>
 
   <!-- 中央キャンバス -->
-  <main class="flex-1 bg-slate-100 overflow-y-auto relative" id="canvas-area">
-    <div class="flex justify-center py-6 px-4 min-h-full">
-      <div id="site-canvas" class="bg-white shadow-xl rounded-t-xl overflow-hidden border border-gray-200 transition-all duration-300" style="width:100%; max-width:900px;">
+  <main class="flex-1 bg-slate-100 overflow-y-auto flex flex-col" id="canvas-wrap">
 
-        <!-- サイトヘッダー -->
-        <div class="editable-section border-b border-gray-100" id="sec-header">
-          <div class="edit-toolbar">
-            <button onclick="toggleEdit('sec-header')"><i class="fas fa-pen mr-1"></i><span class="btn-label">編集する</span></button>
-            <button onclick="openColorPanel('sec-header')"><i class="fas fa-palette mr-1"></i>背景色</button>
-          </div>
-          <div class="color-panel" id="cp-sec-header">
-            <div class="text-xs text-gray-500 mb-2 font-medium">背景色を選択</div>
-            <div class="flex flex-wrap gap-2">
-              <div class="color-swatch" style="background:#ffffff; border:1px solid #e5e7eb" onclick="setBg('sec-header','#ffffff')" title="白"></div>
-              <div class="color-swatch" style="background:#1a2d5a" onclick="setBg('sec-header','#1a2d5a')" title="ネイビー"></div>
-              <div class="color-swatch" style="background:#1e293b" onclick="setBg('sec-header','#1e293b')" title="ダーク"></div>
-              <div class="color-swatch" style="background:#eff6ff" onclick="setBg('sec-header','#eff6ff')" title="ライトブルー"></div>
-              <div class="color-swatch" style="background:#f8fafc" onclick="setBg('sec-header','#f8fafc')" title="グレー白"></div>
-            </div>
-          </div>
-          <div class="p-5 flex justify-between items-center bg-white" id="sec-header-inner">
-            <div class="text-xl font-black editable-text" style="font-family:'Noto Serif JP',serif; color: var(--navy)">サンプル製造株式会社</div>
-            <ul class="flex gap-5 text-sm font-medium text-gray-600">
-              <li class="editable-text hover:text-blue-600 cursor-pointer">製品情報</li>
-              <li class="editable-text hover:text-blue-600 cursor-pointer">技術・設備</li>
-              <li class="editable-text hover:text-blue-600 cursor-pointer">会社案内</li>
-              <li class="editable-text cursor-pointer font-bold" style="color: var(--blue-main)">お問い合わせ</li>
+    <!-- 現在地バナー -->
+    <div id="where-banner">
+      <i class="fas fa-map-marker-alt" style="color:var(--gold)"></i>
+      <span id="where-text">セクションをクリックして編集を開始</span>
+    </div>
+
+    <div class="flex justify-center py-5 px-4 flex-1">
+      <div id="site-canvas" class="bg-white shadow-xl rounded-t-xl overflow-visible border border-gray-200 transition-all duration-300" style="width:100%;max-width:880px;">
+
+        <!-- ヘッダーセクション -->
+        <div class="sec" id="sec-header" onclick="onSecClick('header')">
+          <div class="sec-hint">クリックして編集</div>
+          <div class="sec-label"><i class="fas fa-heading"></i>ヘッダー編集中</div>
+          <div class="p-4 flex justify-between items-center bg-white border-b border-gray-100" id="sec-header-inner">
+            <div class="text-xl font-black editable-text" id="el-sitename" style="font-family:'Noto Serif JP',serif;color:var(--navy)">サンプル製造株式会社</div>
+            <ul class="flex gap-4 text-sm font-medium text-gray-600">
+              <li class="editable-text" id="el-nav1">製品情報</li>
+              <li class="editable-text" id="el-nav2">技術・設備</li>
+              <li class="editable-text" id="el-nav3">会社案内</li>
+              <li class="editable-text font-bold" id="el-nav4" style="color:var(--blue)">お問い合わせ</li>
             </ul>
           </div>
         </div>
 
         <!-- ヒーローセクション -->
-        <div class="editable-section relative" id="sec-hero">
-          <div class="edit-toolbar">
-            <button onclick="toggleEdit('sec-hero')"><i class="fas fa-pen mr-1"></i><span class="btn-label">編集する</span></button>
-            <button onclick="triggerImgUpload('hero-bg-upload')"><i class="fas fa-image mr-1"></i>背景画像</button>
-          </div>
-          <input type="file" id="hero-bg-upload" accept="image/*" class="hidden" onchange="changeHeroBg(event)">
-          <div class="hero-bg h-72 relative flex items-center justify-center text-center" id="hero-bg-div">
+        <div class="sec" id="sec-hero" onclick="onSecClick('hero')">
+          <div class="sec-hint">クリックして編集</div>
+          <div class="sec-label"><i class="fas fa-image"></i>ヒーロー編集中</div>
+          <input type="file" id="hero-file" accept="image/*" class="hidden" onchange="changeHeroBg(event)">
+          <div class="hero-bg h-64 relative flex items-center justify-center text-center" id="hero-bg-div">
             <div class="absolute inset-0 bg-black opacity-50"></div>
-            <!-- 編集中に背景画像変更を促すオーバーレイ -->
-            <div class="img-overlay rounded-none" onclick="triggerImgUpload('hero-bg-upload')">
-              <div class="text-white text-center">
-                <i class="fas fa-image text-3xl mb-2 block opacity-80"></i>
-                <span class="text-sm font-bold">クリックで背景画像を変更</span>
+            <div class="img-overlay" onclick="event.stopPropagation();document.getElementById('hero-file').click()">
+              <div class="text-white text-center pointer-events-none">
+                <i class="fas fa-image text-2xl mb-1 block opacity-80"></i>
+                <span class="text-xs font-bold">タップで背景画像を変更</span>
               </div>
             </div>
             <div class="relative z-10 px-6">
-              <p class="text-xs text-blue-200 font-bold tracking-widest mb-2 editable-text uppercase">Since 1985 | Precision Manufacturing</p>
-              <h2 class="text-3xl font-black text-white mb-3 editable-text leading-tight" style="font-family:'Noto Serif JP',serif; text-shadow: 0 2px 8px rgba(0,0,0,0.3)">
-                精密加工の技術で、<br>ものづくりの未来を支える。
-              </h2>
-              <p class="text-sm text-gray-200 mb-5 editable-text">ISO9001認証取得 ／ 納期遵守率99.2% ／ 取引先200社超</p>
+              <p class="text-xs text-blue-200 font-bold tracking-widest mb-2 editable-text" id="el-hero-sub">Since 1985 | Precision Manufacturing</p>
+              <h2 class="text-3xl font-black text-white mb-3 editable-text leading-tight" id="el-hero-title" style="font-family:'Noto Serif JP',serif">精密加工の技術で、<br>ものづくりの未来を支える。</h2>
+              <p class="text-sm text-gray-200 mb-5 editable-text" id="el-hero-desc">ISO9001認証取得 ／ 納期遵守率99.2% ／ 取引先200社超</p>
               <div class="flex gap-3 justify-center">
-                <button class="px-5 py-2.5 text-white rounded-full font-bold text-sm editable-text shadow-lg hover:opacity-90 transition" style="background: var(--blue-main)">製品・加工事例を見る</button>
-                <button class="px-5 py-2.5 bg-white rounded-full font-bold text-sm editable-text shadow-lg hover:opacity-90 transition" style="color: var(--navy)">お見積もり依頼</button>
+                <button class="px-5 py-2 text-white rounded-full font-bold text-sm editable-text hover:opacity-90" id="el-hero-btn1" style="background:var(--blue)">製品・加工事例を見る</button>
+                <button class="px-5 py-2 bg-white rounded-full font-bold text-sm editable-text hover:opacity-90" id="el-hero-btn2" style="color:var(--navy)">お見積もり依頼</button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- 強みセクション -->
-        <div class="editable-section py-10 px-8 bg-white" id="sec-strengths">
-          <div class="edit-toolbar">
-            <button onclick="toggleEdit('sec-strengths')"><i class="fas fa-pen mr-1"></i><span class="btn-label">編集する</span></button>
-            <button onclick="openColorPanel('sec-strengths')"><i class="fas fa-palette mr-1"></i>背景色</button>
-          </div>
-          <div class="color-panel" id="cp-sec-strengths">
-            <div class="text-xs text-gray-500 mb-2 font-medium">背景色を選択</div>
-            <div class="flex flex-wrap gap-2">
-              <div class="color-swatch" style="background:#ffffff; border:1px solid #e5e7eb" onclick="setBg('sec-strengths','#ffffff')" title="白"></div>
-              <div class="color-swatch" style="background:#f8fafc" onclick="setBg('sec-strengths','#f8fafc')" title="グレー白"></div>
-              <div class="color-swatch" style="background:#eff6ff" onclick="setBg('sec-strengths','#eff6ff')" title="ライトブルー"></div>
-              <div class="color-swatch" style="background:#f0fdf4" onclick="setBg('sec-strengths','#f0fdf4')" title="ライトグリーン"></div>
-              <div class="color-swatch" style="background:#1a2d5a" onclick="setBg('sec-strengths','#1a2d5a')" title="ネイビー"></div>
-            </div>
-          </div>
-          <h3 class="text-lg font-black text-center mb-1 editable-text" style="font-family:'Noto Serif JP',serif; color: var(--navy)">私たちの強み</h3>
-          <p class="text-xs text-center text-gray-400 mb-7 editable-text">40年の経験が生み出す、確かな品質と技術力</p>
+        <div class="sec py-10 px-8 bg-white" id="sec-strengths" onclick="onSecClick('strengths')">
+          <div class="sec-hint">クリックして編集</div>
+          <div class="sec-label"><i class="fas fa-star"></i>強み・特長 編集中</div>
+          <h3 class="text-lg font-black text-center mb-1 editable-text" id="el-str-title" style="font-family:'Noto Serif JP',serif;color:var(--navy)">私たちの強み</h3>
+          <p class="text-xs text-center text-gray-400 mb-7 editable-text" id="el-str-sub">40年の経験が生み出す、確かな品質と技術力</p>
           <div class="grid grid-cols-3 gap-5">
-            <div class="rounded-xl p-5 text-center border border-gray-100 bg-slate-50 hover:shadow-md transition">
-              <div class="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center text-white text-xl shadow" style="background: var(--navy)">
-                <i class="fas fa-cogs"></i>
-              </div>
-              <div class="font-bold text-sm mb-1 editable-text" style="color: var(--navy)">精密加工技術</div>
-              <div class="text-xs text-gray-500 editable-text">公差±0.01mmの高精度加工。3D測定機による全数検査で品質を保証します。</div>
+            <div class="rounded-xl p-5 text-center bg-slate-50 border border-gray-100 hover:shadow-md transition">
+              <div class="w-11 h-11 rounded-xl mx-auto mb-3 flex items-center justify-center text-white text-lg shadow" style="background:var(--navy)"><i class="fas fa-cogs"></i></div>
+              <div class="font-bold text-sm mb-1 editable-text" id="el-str1-t" style="color:var(--navy)">精密加工技術</div>
+              <div class="text-xs text-gray-500 editable-text" id="el-str1-d">公差±0.01mmの高精度加工。3D測定機による全数検査で品質を保証します。</div>
             </div>
-            <div class="rounded-xl p-5 text-center border border-gray-100 bg-slate-50 hover:shadow-md transition">
-              <div class="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center text-white text-xl shadow" style="background: var(--blue-main)">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="font-bold text-sm mb-1 editable-text" style="color: var(--navy)">短納期対応</div>
-              <div class="text-xs text-gray-500 editable-text">最短3日出荷。急ぎの試作・量産にも柔軟に対応いたします。</div>
+            <div class="rounded-xl p-5 text-center bg-slate-50 border border-gray-100 hover:shadow-md transition">
+              <div class="w-11 h-11 rounded-xl mx-auto mb-3 flex items-center justify-center text-white text-lg shadow" style="background:var(--blue)"><i class="fas fa-clock"></i></div>
+              <div class="font-bold text-sm mb-1 editable-text" id="el-str2-t" style="color:var(--navy)">短納期対応</div>
+              <div class="text-xs text-gray-500 editable-text" id="el-str2-d">最短3日出荷。急ぎの試作・量産にも柔軟に対応いたします。</div>
             </div>
-            <div class="rounded-xl p-5 text-center border border-gray-100 bg-slate-50 hover:shadow-md transition">
-              <div class="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center text-white text-xl shadow" style="background: #0891b2">
-                <i class="fas fa-handshake"></i>
-              </div>
-              <div class="font-bold text-sm mb-1 editable-text" style="color: var(--navy)">一貫生産体制</div>
-              <div class="text-xs text-gray-500 editable-text">設計相談から加工・検査・納品まで、ワンストップで対応します。</div>
+            <div class="rounded-xl p-5 text-center bg-slate-50 border border-gray-100 hover:shadow-md transition">
+              <div class="w-11 h-11 rounded-xl mx-auto mb-3 flex items-center justify-center text-white text-lg shadow" style="background:#0891b2"><i class="fas fa-handshake"></i></div>
+              <div class="font-bold text-sm mb-1 editable-text" id="el-str3-t" style="color:var(--navy)">一貫生産体制</div>
+              <div class="text-xs text-gray-500 editable-text" id="el-str3-d">設計相談から加工・検査・納品まで、ワンストップで対応します。</div>
             </div>
           </div>
         </div>
 
-        <!-- 実績数字バー -->
-        <div class="editable-section py-8 px-8" id="sec-numbers" style="background: var(--navy)">
-          <div class="edit-toolbar" style="background: rgba(255,255,255,0.2)">
-            <button onclick="toggleEdit('sec-numbers')" style="color:white"><i class="fas fa-pen mr-1"></i><span class="btn-label">編集する</span></button>
-          </div>
+        <!-- 実績数字 -->
+        <div class="sec py-8 px-8" id="sec-numbers" onclick="onSecClick('numbers')" style="background:var(--navy)">
+          <div class="sec-hint" style="background:rgba(255,255,255,0.2)">クリックして編集</div>
+          <div class="sec-label"><i class="fas fa-chart-bar"></i>実績数字 編集中</div>
           <div class="grid grid-cols-4 gap-4 text-center text-white">
             <div>
-              <div class="text-3xl font-black editable-text" style="font-family:'Noto Serif JP',serif">200<span class="text-lg">社</span></div>
-              <div class="text-xs opacity-70 mt-1 editable-text">取引先企業数</div>
+              <div class="text-3xl font-black editable-text" id="el-num1" style="font-family:'Noto Serif JP',serif">200<span class="text-lg">社</span></div>
+              <div class="text-xs opacity-60 mt-1 editable-text" id="el-num1-l">取引先企業数</div>
             </div>
             <div>
-              <div class="text-3xl font-black editable-text" style="font-family:'Noto Serif JP',serif">99.2<span class="text-lg">%</span></div>
-              <div class="text-xs opacity-70 mt-1 editable-text">納期遵守率</div>
+              <div class="text-3xl font-black editable-text" id="el-num2" style="font-family:'Noto Serif JP',serif">99.2<span class="text-lg">%</span></div>
+              <div class="text-xs opacity-60 mt-1 editable-text" id="el-num2-l">納期遵守率</div>
             </div>
             <div>
-              <div class="text-3xl font-black editable-text" style="font-family:'Noto Serif JP',serif">40<span class="text-lg">年</span></div>
-              <div class="text-xs opacity-70 mt-1 editable-text">業界での実績</div>
+              <div class="text-3xl font-black editable-text" id="el-num3" style="font-family:'Noto Serif JP',serif">40<span class="text-lg">年</span></div>
+              <div class="text-xs opacity-60 mt-1 editable-text" id="el-num3-l">業界での実績</div>
             </div>
             <div>
-              <div class="text-3xl font-black editable-text" style="font-family:'Noto Serif JP',serif">ISO<span class="text-base">9001</span></div>
-              <div class="text-xs opacity-70 mt-1 editable-text">品質認証取得</div>
+              <div class="text-3xl font-black editable-text" id="el-num4" style="font-family:'Noto Serif JP',serif">ISO<span class="text-base">9001</span></div>
+              <div class="text-xs opacity-60 mt-1 editable-text" id="el-num4-l">品質認証取得</div>
             </div>
           </div>
         </div>
 
-        <!-- お問い合わせCTA -->
-        <div class="editable-section py-10 px-8 text-center bg-blue-50" id="sec-cta">
-          <div class="edit-toolbar">
-            <button onclick="toggleEdit('sec-cta')"><i class="fas fa-pen mr-1"></i><span class="btn-label">編集する</span></button>
-          </div>
-          <p class="text-xs font-bold text-blue-500 mb-2 editable-text tracking-widest uppercase">Contact Us</p>
-          <h3 class="text-xl font-black mb-2 editable-text" style="font-family:'Noto Serif JP',serif; color: var(--navy)">お見積もり・ご相談はお気軽に</h3>
-          <p class="text-sm text-gray-500 mb-6 editable-text">仕様書・図面をお送りいただければ、2営業日以内にお見積もりをお届けします。</p>
-          <button class="px-8 py-3 text-white font-bold rounded-full shadow-lg text-sm editable-text hover:opacity-90 transition" style="background: var(--navy)">今すぐ無料相談・お見積もり依頼</button>
+        <!-- CTA -->
+        <div class="sec py-10 px-8 text-center bg-blue-50" id="sec-cta" onclick="onSecClick('cta')">
+          <div class="sec-hint">クリックして編集</div>
+          <div class="sec-label"><i class="fas fa-envelope"></i>お問い合わせ 編集中</div>
+          <p class="text-xs font-bold text-blue-400 mb-2 editable-text tracking-widest" id="el-cta-label">Contact Us</p>
+          <h3 class="text-xl font-black mb-2 editable-text" id="el-cta-title" style="font-family:'Noto Serif JP',serif;color:var(--navy)">お見積もり・ご相談はお気軽に</h3>
+          <p class="text-sm text-gray-500 mb-6 editable-text" id="el-cta-desc">仕様書・図面をお送りいただければ、2営業日以内にお見積もりをお届けします。</p>
+          <button class="px-8 py-3 text-white font-bold rounded-full shadow-lg text-sm editable-text hover:opacity-90" id="el-cta-btn" style="background:var(--navy)">今すぐ無料相談・お見積もり依頼</button>
         </div>
 
-      </div><!-- /site-canvas -->
+      </div>
     </div>
   </main>
 
-  <!-- ========== 右パネル：AIナビゲーター ========== -->
-  <aside class="w-80 bg-white border-l border-gray-200 flex flex-col shrink-0 shadow-[-4px_0_16px_rgba(0,0,0,0.04)] z-20">
+  <!-- 右パネル：アイ -->
+  <aside class="w-80 bg-white border-l border-gray-200 flex flex-col shrink-0 z-20 shadow-[-3px_0_12px_rgba(0,0,0,0.04)]">
 
-    <!-- AIヘッダー -->
-    <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-3" style="background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)">
+    <!-- アイヘッダー -->
+    <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-3" style="background:linear-gradient(135deg,#fffbeb,#fef3c7)">
       <div class="relative shrink-0">
-        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-base shadow" style="background: var(--navy)">I</div>
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-base shadow" style="background:var(--navy)">I</div>
         <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
       </div>
-      <div>
+      <div class="flex-1 min-w-0">
         <div class="font-bold text-gray-900 text-sm">ナビゲーター アイ</div>
-        <div class="text-[11px] font-medium" style="color: var(--blue-main)">Claude AI 稼働中 ● 製造業特化</div>
+        <div class="text-[10px] text-amber-600 font-medium truncate" id="ai-status">セクションをクリックして編集を開始</div>
       </div>
-      <button onclick="clearChat()" class="ml-auto text-gray-300 hover:text-gray-500 transition text-xs" title="会話をリセット">
-        <i class="fas fa-rotate-right"></i>
-      </button>
+      <button onclick="resetAll()" class="text-gray-300 hover:text-gray-500 transition text-xs" title="リセット"><i class="fas fa-rotate-right"></i></button>
     </div>
 
-    <!-- チャットエリア -->
-    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" id="chat-container">
-      <!-- 初期メッセージ -->
-      <div class="flex gap-2.5 max-w-[95%]">
-        <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm" style="background: var(--navy)">I</div>
-        <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3.5 py-3 text-xs text-gray-700 leading-relaxed shadow-sm">
-          こんにちは！製造業専門のWebコンサルタント「アイ」です😊<br><br>
-          御社のホームページ、もっと受注や採用に活かせるはずです。<br>
-          まず、今いちばん困っていることを教えてください！
+    <!-- チャット -->
+    <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-3" id="chat-box">
+      <div class="flex gap-2 max-w-[95%]">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0" style="background:var(--navy)">I</div>
+        <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3 py-2.5 text-xs text-gray-700 leading-relaxed">
+          こんにちは😊 Webコンサルタントのアイです。<br><br>
+          <strong>中央のセクションをクリック</strong>すると、左のメニューが光って、私がそのセクションのお手伝いをします。<br><br>
+          「キャッチコピーをもっと力強くして」「採用ページの文章を作って」など、言葉で伝えるだけでOKです！
         </div>
       </div>
     </div>
 
-    <!-- サジェストチップ -->
-    <div class="px-3 pt-2 flex flex-wrap gap-1.5" id="suggestions">
-      <button class="chip text-[10px] bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1.5 rounded-full hover:bg-blue-100 transition" onclick="sendSuggestion('新規顧客からの問い合わせが少なくて困っています。')">
-        <i class="fas fa-search mr-1"></i>新規問い合わせが少ない
-      </button>
-      <button class="chip text-[10px] bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1.5 rounded-full hover:bg-blue-100 transition" onclick="sendSuggestion('技術力はあるのに、ホームページにうまく反映できていません。')">
-        <i class="fas fa-tools mr-1"></i>技術力をうまく伝えたい
-      </button>
-      <button class="chip text-[10px] bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1.5 rounded-full hover:bg-blue-100 transition" onclick="sendSuggestion('技術者・職人の採用がなかなかうまくいきません。')">
-        <i class="fas fa-user-hard-hat mr-1"></i>技術者の採用を強化したい
-      </button>
-      <button class="chip text-[10px] bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1.5 rounded-full hover:bg-blue-100 transition" onclick="sendSuggestion('取引先への資料や仕様書の共有をもっと効率化したいです。')">
-        <i class="fas fa-lock mr-1"></i>取引先との情報共有を改善
-      </button>
+    <!-- サジェスト -->
+    <div class="px-3 pt-2 flex flex-wrap gap-1.5" id="chips">
+      <button class="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1.5 rounded-full hover:bg-amber-100 transition" onclick="quickSend('新規問い合わせを増やしたいです')"><i class="fas fa-search mr-1"></i>問い合わせを増やしたい</button>
+      <button class="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1.5 rounded-full hover:bg-amber-100 transition" onclick="quickSend('技術力をうまく伝えたいです')"><i class="fas fa-tools mr-1"></i>技術力を伝えたい</button>
+      <button class="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1.5 rounded-full hover:bg-amber-100 transition" onclick="quickSend('採用強化のためのページを作りたいです')"><i class="fas fa-user mr-1"></i>採用を強化したい</button>
     </div>
 
-    <!-- 入力エリア -->
-    <div class="p-3 border-t border-gray-100 bg-white">
+    <!-- 入力 -->
+    <div class="p-3 border-t border-gray-100">
       <div class="flex gap-2 items-end">
-        <textarea id="chat-input" rows="2" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs resize-none" placeholder="お悩みを入力してください..." onkeydown="handleKey(event)"></textarea>
-        <button id="send-btn" onclick="handleSubmit()" class="p-2.5 text-white rounded-xl shadow-sm hover:opacity-90 transition disabled:opacity-40 shrink-0" style="background: var(--navy)">
-          <i class="fas fa-paper-plane text-sm"></i>
-        </button>
+        <textarea id="chat-input" rows="2" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs resize-none transition" placeholder="アイに話しかけてください..." onkeydown="handleKey(event)"></textarea>
+        <button id="send-btn" onclick="doSend()" class="p-2.5 text-white rounded-xl hover:opacity-90 transition shrink-0" style="background:var(--navy)"><i class="fas fa-paper-plane text-sm"></i></button>
       </div>
-      <div class="text-center mt-2 text-[10px] text-gray-300">Shift+Enterで改行 ／ Enterで送信</div>
+      <div class="text-center mt-1 text-[10px] text-gray-300">Enterで送信 ／ Shift+Enterで改行</div>
     </div>
   </aside>
-</div><!-- /main flex -->
+</div>
 
-<!-- トースト通知 -->
+<!-- フッター -->
+<footer class="bg-white border-t border-gray-100 py-2 text-center shrink-0">
+  <span class="text-[10px] text-gray-300 tracking-wide">監修：前田経営研究所</span>
+</footer>
+
 <div id="toast"></div>
 
 <script>
 /* =====================================================
-   設定：ここだけ変更してください
+   設定
 ===================================================== */
-// CloudflareWorkersのURL（デプロイ後に変更）
 const WORKER_URL = "https://smartpage-i.yymmatsu.workers.dev";
 
 /* =====================================================
-   見たまま編集機能
+   セクション定義
 ===================================================== */
-function toggleEdit(secId) {
-  const sec = document.getElementById(secId);
-  const isEditing = sec.classList.contains('is-editing');
-  const btn = sec.querySelector('.btn-label');
-
-  // 他のセクションの編集を終了
-  document.querySelectorAll('.editable-section.is-editing').forEach(s => {
-    if (s.id !== secId) finishEdit(s.id);
-  });
-
-  if (isEditing) {
-    finishEdit(secId);
-    showToast('✅ 保存しました');
-  } else {
-    startEdit(secId);
+const SEC_DEF = {
+  header: {
+    navId: 'nav-header',
+    label: 'ヘッダー編集中',
+    aiGreet: 'ヘッダーを選びましたね✏️\n\n会社名・ナビゲーションメニューを変更できます。\n\n「会社名をこうしたい」「メニューにこの項目を追加したい」など、教えてください！\nAIが文章を提案して、ボタン一つでページに反映できますよ。',
+    targets: {
+      '会社名': 'el-sitename',
+      'メニュー1': 'el-nav1',
+      'メニュー2': 'el-nav2',
+      'メニュー3': 'el-nav3',
+      'お問い合わせ': 'el-nav4'
+    }
+  },
+  hero: {
+    navId: 'nav-hero',
+    label: 'ヒーロー編集中',
+    aiGreet: 'ヒーローセクションですね🎯\n\nキャッチコピー・サブコピー・ボタン文言を変更できます。\n\n「もっと力強いコピーにして」「製造業らしい表現で」「短納期が強みだから入れたい」など、どんどん教えてください！',
+    targets: {
+      'サブコピー': 'el-hero-sub',
+      'キャッチコピー': 'el-hero-title',
+      '実績紹介文': 'el-hero-desc',
+      'ボタン1': 'el-hero-btn1',
+      'ボタン2': 'el-hero-btn2'
+    }
+  },
+  strengths: {
+    navId: 'nav-strengths',
+    label: '強み・特長 編集中',
+    aiGreet: '強み・特長セクションです⭐\n\n3つの強みの見出し・説明文を変更できます。\n\n「うちの一番の強みは〇〇です」「もっと技術的な表現にして」と伝えてもらえれば、私がプロの文章を作ります！',
+    targets: {
+      'セクションタイトル': 'el-str-title',
+      'サブタイトル': 'el-str-sub',
+      '強み1タイトル': 'el-str1-t',
+      '強み1説明': 'el-str1-d',
+      '強み2タイトル': 'el-str2-t',
+      '強み2説明': 'el-str2-d',
+      '強み3タイトル': 'el-str3-t',
+      '強み3説明': 'el-str3-d'
+    }
+  },
+  numbers: {
+    navId: 'nav-numbers',
+    label: '実績数字 編集中',
+    aiGreet: '実績数字セクションですね📊\n\n取引先数・納期遵守率・創業年数・認証などの数字を変更できます。\n\n「実際の数字はこうです」と教えてもらえれば、インパクトのある表現に整えます！',
+    targets: {
+      '実績1': 'el-num1',
+      '実績1ラベル': 'el-num1-l',
+      '実績2': 'el-num2',
+      '実績2ラベル': 'el-num2-l',
+      '実績3': 'el-num3',
+      '実績3ラベル': 'el-num3-l',
+      '実績4': 'el-num4',
+      '実績4ラベル': 'el-num4-l'
+    }
+  },
+  cta: {
+    navId: 'nav-cta',
+    label: 'お問い合わせ 編集中',
+    aiGreet: 'お問い合わせセクションです📩\n\nCTAの見出し・説明文・ボタン文言を変更できます。\n\n「もっと問い合わせしやすい文章にして」「製造業の取引先向けに書き直して」など、気軽に伝えてください！',
+    targets: {
+      'ラベル': 'el-cta-label',
+      'タイトル': 'el-cta-title',
+      '説明文': 'el-cta-desc',
+      'ボタン': 'el-cta-btn'
+    }
+  },
+  gallery: {
+    navId: 'nav-gallery',
+    label: '技術ギャラリー',
+    aiGreet: '技術ギャラリーの設定ですね🏭\n\n製造業の最大の武器は「技術力の見せる化」です！\n\n今どんな加工・製品を扱っていますか？\n金属加工・樹脂成形・板金・食品製造など教えていただければ、ギャラリーページの構成と文章を一緒に作ります！',
+    targets: {}
+  },
+  dl: {
+    navId: 'nav-dl',
+    label: '資料DL設定',
+    aiGreet: '資料ダウンロードの設定ですね📄\n\nBtoB製造業では、カタログ・設備一覧・品質保証書などのPDF提供が商談化率を大きく上げます。\n\n今、どんな資料を用意していますか？\nまたは「何を用意すべきか」も一緒に考えましょう！',
+    targets: {}
+  },
+  recruit: {
+    navId: 'nav-recruit',
+    label: '採用ページ',
+    aiGreet: '採用ページの設定ですね👷\n\n製造業の採用で効果が高いのは「工場の雰囲気動画」と「Indeed自動連携」です。\n\n今、どんな職種を募集していますか？\n職種・給与・特徴を教えてもらえれば、求人ページの文章をすぐに作れますよ！',
+    targets: {}
+  },
+  private: {
+    navId: 'nav-private',
+    label: '取引先専用',
+    aiGreet: '取引先専用ページですね🔒\n\nパスワード付きの限定ページに仕様書・図面・納品書などを置けます。メール添付の手間がゼロになります。\n\n今、取引先とのやりとりでよく送る資料はどんなものですか？',
+    targets: {}
+  },
+  analytics: {
+    navId: 'nav-analytics',
+    label: 'アクセス解析',
+    aiGreet: 'アクセス解析の確認ですね📊\n\n製造業で特に重要なのは「製品ページの閲覧数」と「問い合わせページへの動線」です。\n\n現在Googleアナリティクスは設定済みですか？\nまだであれば、設定手順も一緒に確認しましょう！',
+    targets: {}
   }
+};
+
+/* =====================================================
+   状態管理
+===================================================== */
+let currentSec = null;
+let chatHistory = [];
+let pendingApply = null; // AIが提案中のテキストと対象ID
+
+/* =====================================================
+   中央セクションをクリック → 逆引きで左メニューが光る
+===================================================== */
+function onSecClick(key) {
+  if (currentSec === key) return;
+  activateSec(key);
 }
 
-function startEdit(secId) {
-  const sec = document.getElementById(secId);
-  sec.classList.add('is-editing');
-  sec.querySelectorAll('.editable-text').forEach(el => el.setAttribute('contenteditable', 'true'));
-  const btn = sec.querySelector('.btn-label');
-  if (btn) btn.textContent = '保存する';
+function onNav(key) {
+  activateSec(key);
+  // 対応するセクションがあればスクロール
+  const sec = document.getElementById('sec-' + key);
+  if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function finishEdit(secId) {
-  const sec = document.getElementById(secId);
-  sec.classList.remove('is-editing');
-  sec.querySelectorAll('.editable-text').forEach(el => el.removeAttribute('contenteditable'));
-  const btn = sec.querySelector('.btn-label');
-  if (btn) btn.textContent = '編集する';
-  // カラーパネルも閉じる
-  const cp = document.getElementById('cp-' + secId);
-  if (cp) cp.classList.remove('open');
-}
+function activateSec(key) {
+  const def = SEC_DEF[key];
+  if (!def) return;
 
-// 背景色変更
-function openColorPanel(secId) {
-  const cp = document.getElementById('cp-' + secId);
-  if (!cp) return;
-  cp.classList.toggle('open');
-}
-
-function setBg(secId, color) {
-  const sec = document.getElementById(secId);
-  // inner div があればそちら、なければ sec 自体に適用
-  const inner = sec.querySelector('#' + secId + '-inner') || sec;
-  inner.style.background = color;
-  // テキスト色を自動調整（濃い背景なら白）
-  const darkBgs = ['#1a2d5a','#1e293b','#111827','#0f172a'];
-  if (darkBgs.includes(color.toLowerCase())) {
-    inner.querySelectorAll('.editable-text, h2, h3, p, li').forEach(el => el.style.color = 'white');
+  // 前のセクションのアクティブ解除
+  if (currentSec) {
+    const prevSec = document.getElementById('sec-' + currentSec);
+    if (prevSec) {
+      prevSec.classList.remove('active-sec');
+      prevSec.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    }
+    const prevNav = document.getElementById(SEC_DEF[currentSec]?.navId);
+    if (prevNav) prevNav.classList.remove('active');
   }
-  const cp = document.getElementById('cp-' + secId);
-  if (cp) cp.classList.remove('open');
-  showToast('🎨 背景色を変更しました');
+
+  currentSec = key;
+
+  // 中央セクションをアクティブに
+  const sec = document.getElementById('sec-' + key);
+  if (sec) {
+    sec.classList.add('active-sec');
+    // editableをON（テキスト要素のみ）
+    sec.querySelectorAll('.editable-text').forEach(el => el.setAttribute('contenteditable', 'true'));
+  }
+
+  // 左メニューを金色にアクティブ
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const nav = document.getElementById(def.navId);
+  if (nav) {
+    nav.classList.add('active');
+    nav.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // 現在地バナー更新
+  const banner = document.getElementById('where-banner');
+  document.getElementById('where-text').textContent = '今ここを編集中：' + def.label;
+  banner.classList.add('show');
+
+  // アイのステータス更新
+  document.getElementById('ai-status').textContent = def.label;
+
+  // アイが自動で話しかける
+  addAiMsg(def.aiGreet);
+
+  // サジェストチップを隠す
+  document.getElementById('chips').style.display = 'none';
+
+  showToast('📌 ' + def.label);
 }
 
-// ヒーロー背景画像変更
-function triggerImgUpload(inputId) {
-  document.getElementById(inputId).click();
+/* =====================================================
+   テキスト直接編集
+===================================================== */
+// セクション外クリックで編集終了
+document.addEventListener('click', e => {
+  if (currentSec && !e.target.closest('#sec-' + currentSec) && !e.target.closest('aside')) {
+    deactivateCurrent();
+  }
+  // カラーパネルを閉じる
+  if (!e.target.closest('.color-panel') && !e.target.closest('.open-cp')) {
+    document.querySelectorAll('.color-panel.open').forEach(cp => cp.classList.remove('open'));
+  }
+});
+
+function deactivateCurrent() {
+  if (!currentSec) return;
+  const sec = document.getElementById('sec-' + currentSec);
+  if (sec) {
+    sec.classList.remove('active-sec');
+    sec.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  }
+  const nav = document.getElementById(SEC_DEF[currentSec]?.navId);
+  if (nav) nav.classList.remove('active');
+  document.getElementById('where-banner').classList.remove('show');
+  currentSec = null;
 }
 
+/* =====================================================
+   画像変更
+===================================================== */
 function changeHeroBg(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = e => {
     const div = document.getElementById('hero-bg-div');
     div.style.backgroundImage = `url('${e.target.result}')`;
     div.style.backgroundSize = 'cover';
@@ -517,102 +627,114 @@ function changeHeroBg(event) {
   reader.readAsDataURL(file);
 }
 
-// PCとスマホのプレビュー切替
-function setPreviewMode(mode) {
-  const canvas = document.getElementById('site-canvas');
-  if (mode === 'sp') {
-    canvas.style.maxWidth = '390px';
-    showToast('📱 スマートフォン表示');
-  } else {
-    canvas.style.maxWidth = '900px';
-    showToast('🖥️ PC表示');
-  }
+/* =====================================================
+   プレビュー切替
+===================================================== */
+function setPreview(mode) {
+  const c = document.getElementById('site-canvas');
+  if (mode === 'sp') { c.style.maxWidth = '390px'; showToast('📱 スマートフォン表示'); }
+  else { c.style.maxWidth = '880px'; showToast('🖥️ PC表示'); }
 }
 
-// 外側クリックでカラーパネルを閉じる
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.color-panel') && !e.target.closest('.edit-toolbar')) {
-    document.querySelectorAll('.color-panel.open').forEach(cp => cp.classList.remove('open'));
-  }
-});
-
 /* =====================================================
-   AIナビゲーター（Claude API連携）
+   AIナビゲーター
 ===================================================== */
-let chatHistory = [];
-
 function addUserBubble(text) {
-  const c = document.getElementById('chat-container');
+  const c = document.getElementById('chat-box');
   c.insertAdjacentHTML('beforeend', `
-    <div class="flex gap-2.5 max-w-[95%] self-end flex-row-reverse">
-      <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs shrink-0">You</div>
-      <div class="text-white rounded-2xl rounded-tr-none px-3.5 py-3 text-xs leading-relaxed shadow-sm" style="background: var(--blue-main)">${text.replace(/\n/g,'<br>')}</div>
-    </div>
-  `);
+    <div class="flex gap-2 max-w-[95%] self-end flex-row-reverse">
+      <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px] shrink-0">You</div>
+      <div class="text-white rounded-2xl rounded-tr-none px-3 py-2.5 text-xs leading-relaxed" style="background:var(--blue)">${text.replace(/\n/g,'<br>')}</div>
+    </div>`);
   scrollChat();
 }
 
-function addAiBubble(text) {
-  // セクション見出しを装飾
-  const sections = [
-    { key: /【共感と現状分析】/g, icon: 'fas fa-heart', color: '#ec4899', label: '共感と現状分析' },
-    { key: /【次の一手のアドバイス】/g, icon: 'fas fa-lightbulb', color: '#d97706', label: '次の一手のアドバイス' },
-    { key: /【期待できる成果】/g, icon: 'fas fa-chart-line', color: '#16a34a', label: '期待できる成果' },
-    { key: /【ネクストアクション】/g, icon: 'fas fa-flag', color: '#dc2626', label: 'ネクストアクション' },
+function addAiMsg(text, applyTargets) {
+  // セクション見出し装飾
+  const hdrs = [
+    { re: /【共感と現状分析】/g, icon:'fas fa-heart', color:'#ec4899', label:'共感と現状分析' },
+    { re: /【次の一手のアドバイス】/g, icon:'fas fa-lightbulb', color:'#d97706', label:'次の一手のアドバイス' },
+    { re: /【期待できる成果】/g, icon:'fas fa-chart-line', color:'#16a34a', label:'期待できる成果' },
+    { re: /【ネクストアクション】/g, icon:'fas fa-flag', color:'#dc2626', label:'ネクストアクション' },
   ];
   let html = text;
-  sections.forEach(s => {
-    html = html.replace(s.key,
-      `<span class="section-header"><i class="${s.icon}" style="color:${s.color}"></i>${s.label}</span>`
-    );
-  });
-  // マークダウン風変換
+  hdrs.forEach(h => html = html.replace(h.re, `<span class="sec-hdr"><i class="${h.icon}" style="color:${h.color}"></i>${h.label}</span>`));
   html = html
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/^[-・]\s+(.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>');
 
-  const c = document.getElementById('chat-container');
+  // 反映ボタン群を生成
+  let applyHtml = '';
+  if (applyTargets && Object.keys(applyTargets).length > 0) {
+    applyHtml = '<div class="apply-wrap">';
+    Object.entries(applyTargets).forEach(([label, data]) => {
+      const safeText = data.text.replace(/"/g, '&quot;');
+      applyHtml += `<button class="apply-btn" onclick="applyText('${data.elId}','${safeText}')"><i class="fas fa-check-circle"></i>「${label}」を反映</button>`;
+    });
+    applyHtml += '</div>';
+  }
+
+  const c = document.getElementById('chat-box');
   c.insertAdjacentHTML('beforeend', `
-    <div class="flex gap-2.5 max-w-[95%]">
-      <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm" style="background: var(--navy)">I</div>
-      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3.5 py-3 text-xs text-gray-700 leading-relaxed shadow-sm ai-msg"><p>${html}</p></div>
-    </div>
-  `);
+    <div class="flex gap-2 max-w-[95%]">
+      <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0" style="background:var(--navy)">I</div>
+      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3 py-2.5 text-xs text-gray-700 leading-relaxed ai-msg"><p>${html}</p>${applyHtml}</div>
+    </div>`);
   scrollChat();
 }
 
 function showTyping() {
-  const id = 'typing-' + Date.now();
-  const c = document.getElementById('chat-container');
-  c.insertAdjacentHTML('beforeend', `
-    <div id="${id}" class="flex gap-2.5">
-      <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0" style="background: var(--navy)">I</div>
-      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 flex gap-1 items-center h-10">
-        <span class="dot w-1.5 h-1.5 rounded-full bg-gray-400 inline-block"></span>
-        <span class="dot w-1.5 h-1.5 rounded-full bg-gray-400 inline-block"></span>
-        <span class="dot w-1.5 h-1.5 rounded-full bg-gray-400 inline-block"></span>
+  const id = 'tp-' + Date.now();
+  document.getElementById('chat-box').insertAdjacentHTML('beforeend', `
+    <div id="${id}" class="flex gap-2">
+      <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0" style="background:var(--navy)">I</div>
+      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 flex gap-1 items-center">
+        <span class="dot w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+        <span class="dot w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+        <span class="dot w-1.5 h-1.5 rounded-full bg-gray-400"></span>
       </div>
-    </div>
-  `);
+    </div>`);
   scrollChat();
   return id;
 }
+function removeTyping(id) { const el = document.getElementById(id); if (el) el.remove(); }
+function scrollChat() { const c = document.getElementById('chat-box'); c.scrollTop = c.scrollHeight; }
 
-function removeTyping(id) {
-  const el = document.getElementById(id);
-  if (el) el.remove();
-}
-
-function scrollChat() {
-  const c = document.getElementById('chat-container');
-  c.scrollTop = c.scrollHeight;
-}
-
+/* =====================================================
+   AIへの送信（モード情報＋反映指示をシステムに付加）
+===================================================== */
 async function callWorker(userMsg) {
-  chatHistory.push({ role: 'user', content: userMsg });
+  const def = currentSec ? SEC_DEF[currentSec] : null;
+  const targets = def ? Object.keys(def.targets) : [];
+  const secInfo = def
+    ? `[現在編集中のセクション: ${def.label}]\n[変更できる項目: ${targets.join('、')}]\n\n`
+    : '';
+
+  const instruction = `
+あなたはSmartpage Iのナビゲーター「アイ」です。製造業専門のWebコンサルタントとして回答してください。
+
+変更できる項目がある場合、提案文章の後に必ず以下の形式でJSONブロックを出力してください：
+
+\`\`\`json
+{
+  "applies": [
+    {"label": "項目名", "elId": "要素ID", "text": "新しいテキスト"}
+  ]
+}
+\`\`\`
+
+現在編集可能な要素IDは以下の通りです：
+${def ? JSON.stringify(def.targets, null, 2) : '（セクション未選択）'}
+
+JSONブロック以外の部分は通常の会話形式で、温かく丁寧に回答してください。
+`;
+
+  const fullMsg = secInfo + userMsg;
+  chatHistory.push({ role: 'user', content: fullMsg });
+
   try {
     const res = await fetch(WORKER_URL, {
       method: 'POST',
@@ -621,67 +743,103 @@ async function callWorker(userMsg) {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const reply = data.reply || 'エラーが発生しました。もう一度お試しください。';
+    let reply = data.reply || 'エラーが発生しました。';
     chatHistory.push({ role: 'assistant', content: reply });
-    return reply;
+
+    // JSONブロックを解析して反映ボタンを生成
+    let applyTargets = null;
+    const jsonMatch = reply.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[1]);
+        if (parsed.applies && parsed.applies.length > 0) {
+          applyTargets = {};
+          parsed.applies.forEach(a => {
+            applyTargets[a.label] = { elId: a.elId, text: a.text };
+          });
+        }
+      } catch(e) {}
+      // JSONブロックを本文から除去
+      reply = reply.replace(/```json[\s\S]*?```/g, '').trim();
+    }
+
+    return { text: reply, applyTargets };
   } catch (err) {
     console.error(err);
-    chatHistory.push({ role: 'assistant', content: 'エラーが発生しました。WorkerのURLを確認してください。' });
-    return `⚠️ 通信エラーが発生しました。\n\nWORKER_URLを設定してください。\n現在: ${WORKER_URL}`;
+    return { text: `⚠️ 通信エラーです。\nWORKER_URLを確認してください。`, applyTargets: null };
   }
 }
 
-async function handleSubmit() {
+/* =====================================================
+   テキストをページに反映
+===================================================== */
+function applyText(elId, newText) {
+  const el = document.getElementById(elId);
+  if (!el) { showToast('⚠️ 対象が見つかりません'); return; }
+  el.textContent = newText;
+  // 反映したセクションをフラッシュ
+  if (currentSec) {
+    const sec = document.getElementById('sec-' + currentSec);
+    if (sec) {
+      sec.style.transition = 'box-shadow 0.3s';
+      sec.style.boxShadow = '0 0 0 6px rgba(22,163,74,0.3)';
+      setTimeout(() => { sec.style.boxShadow = ''; }, 800);
+    }
+  }
+  showToast('✅ ページに反映しました！');
+}
+
+/* =====================================================
+   送信処理
+===================================================== */
+async function doSend() {
   const input = document.getElementById('chat-input');
   const btn = document.getElementById('send-btn');
   const text = input.value.trim();
   if (!text) return;
-
   addUserBubble(text);
   input.value = '';
   input.disabled = true;
   btn.disabled = true;
-  document.getElementById('suggestions').style.display = 'none';
-
+  document.getElementById('chips').style.display = 'none';
   const tid = showTyping();
-  const reply = await callWorker(text);
+  const result = await callWorker(text);
   removeTyping(tid);
-  addAiBubble(reply);
-
+  addAiMsg(result.text, result.applyTargets);
   input.disabled = false;
   btn.disabled = false;
   input.focus();
 }
 
-function sendSuggestion(msg) {
+function quickSend(msg) {
   document.getElementById('chat-input').value = msg;
-  handleSubmit();
+  doSend();
 }
 
 function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    handleSubmit();
-  }
-}
-
-function clearChat() {
-  chatHistory = [];
-  const c = document.getElementById('chat-container');
-  c.innerHTML = `
-    <div class="flex gap-2.5 max-w-[95%]">
-      <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm" style="background: var(--navy)">I</div>
-      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3.5 py-3 text-xs text-gray-700 leading-relaxed shadow-sm">
-        会話をリセットしました。新しいご相談をどうぞ😊
-      </div>
-    </div>
-  `;
-  document.getElementById('suggestions').style.display = '';
-  showToast('🔄 会話をリセットしました');
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); }
 }
 
 /* =====================================================
-   トースト通知
+   リセット
+===================================================== */
+function resetAll() {
+  deactivateCurrent();
+  chatHistory = [];
+  document.getElementById('chat-box').innerHTML = `
+    <div class="flex gap-2 max-w-[95%]">
+      <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0" style="background:var(--navy)">I</div>
+      <div class="bg-slate-50 border border-gray-100 rounded-2xl rounded-tl-none px-3 py-2.5 text-xs text-gray-700 leading-relaxed">
+        リセットしました😊 中央のセクションをクリックして編集を始めましょう！
+      </div>
+    </div>`;
+  document.getElementById('chips').style.display = '';
+  document.getElementById('ai-status').textContent = 'セクションをクリックして編集を開始';
+  showToast('🔄 リセットしました');
+}
+
+/* =====================================================
+   トースト
 ===================================================== */
 function showToast(msg) {
   const t = document.getElementById('toast');
