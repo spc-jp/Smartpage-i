@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartpage I - ホームページ制作 & AIナビゲーター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* 見たまま編集のホバーエフェクト用 */
+        .editable-section {
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .editable-section:hover {
+            border-color: #3b82f6;
+        }
+        .editable-section.is-editing {
+            border-color: #22c55e !important;
+            background-color: rgba(34, 197, 94, 0.05);
+        }
+        .editable-section .edit-btn {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            color: white;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            border-bottom-left-radius: 8px;
+            z-index: 10;
+        }
+        .editable-section:hover .edit-btn, .editable-section.is-editing .edit-btn {
+            display: block;
+        }
+        
+        [contenteditable="true"] {
+            outline: 2px dashed #94a3b8;
+            outline-offset: 4px;
+            border-radius: 2px;
+            transition: outline 0.2s;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid #22c55e;
+            background-color: rgba(255,255,255,0.8);
+        }
+
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        /* Markdown用のスタイル */
+        .markdown-body p { margin-bottom: 0.75em; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .markdown-body strong { color: #1f2937; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col font-sans overflow-hidden text-gray-800">
+
+    <!-- ヘッダー -->
+    <header class="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-6 shrink-0 z-10">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-xl">S</div>
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Smartpage I</h1>
+            <span class="ml-4 px-2 py-1 bg-gray-100 text-xs text-gray-500 rounded border border-gray-200">編集中: スマート工務店 様</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="text-gray-500 hover:text-gray-800"><i class="fas fa-desktop"></i></button>
+            <button class="text-gray-500 hover:text-gray-800"><i class="fas fa-mobile-alt"></i></button>
+            <div class="w-px h-6 bg-gray-300 mx-2"></div>
+            <button class="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50 transition">プレビュー</button>
+            <button class="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow-sm" onclick="alert('更新を公開しました！（デモ）')">更新を公開</button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- 左サイドバー（機能メニュー） -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+            <nav class="flex-1 overflow-y-auto py-4">
+                <div class="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">基本操作</div>
+                <a href="#" class="flex items-center gap-3 px-6 py-2.5 bg-blue-50 text-blue-700 border-r-4 border-blue-600">
+                    <i class="fas fa-file-alt w-5 text-center"></i> ページ編集
+                </a>
+                <a href="#" class="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fas fa-sitemap w-5 text-center"></i> 構成・メニュー
+                </a>
+                <a href="#" class="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fas fa-paint-roller w-5 text-center"></i> デザイン設定
+                </a>
+
+                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">機能拡張（成果アップ）</div>
+                <a href="#" class="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fas fa-shopping-cart w-5 text-center text-green-500"></i> 注文・予約設定
+                </a>
+                <a href="#" class="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fas fa-briefcase w-5 text-center text-orange-500"></i> 求人連携 (Indeed等)
+                </a>
+                
+                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">分析・改善</div>
+                <a href="#" class="flex items-center gap-3 px-6 py-2.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fas fa-chart-line w-5 text-center text-purple-500"></i> アクセス解析
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 中央エリア（見たまま簡単編集キャンバス） -->
+        <main class="flex-1 bg-gray-100 overflow-y-auto p-8 relative flex justify-center">
+            <div class="bg-white shadow-lg w-full max-w-4xl min-h-full rounded-t-lg overflow-hidden border border-gray-200">
+                
+                <!-- サイト内ヘッダー -->
+                <div class="editable-section p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                    <div class="edit-btn bg-blue-600 cursor-pointer"><i class="fas fa-pen mr-1"></i>ヘッダーを編集</div>
+                    <div class="text-2xl font-bold text-gray-800 editable-text">スマート工務店</div>
+                    <ul class="flex gap-6 text-sm font-medium text-gray-600">
+                        <li class="editable-text">ホーム</li>
+                        <li class="editable-text">施工事例</li>
+                        <li class="editable-text">会社案内</li>
+                        <li class="text-blue-600 editable-text">お問い合わせ</li>
+                    </ul>
+                </div>
+
+                <!-- ヒーローセクション -->
+                <div class="editable-section h-80 bg-gray-800 relative flex items-center justify-center text-center">
+                    <div class="edit-btn bg-blue-600 cursor-pointer"><i class="fas fa-pen mr-1"></i>背景・コピーを編集</div>
+                    <div class="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center"></div>
+                    <div class="relative z-10 p-6">
+                        <h2 class="text-4xl font-bold text-white mb-4 shadow-sm editable-text">理想の住まいを、適正価格で。</h2>
+                        <p class="text-lg text-gray-200 mb-6 editable-text">地域密着30年。お客様に寄り添う家づくりをお約束します。</p>
+                        <button class="px-6 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition editable-text">無料相談を予約する</button>
+                    </div>
+                </div>
+
+                <!-- お知らせセクション -->
+                <div class="editable-section py-12 px-8 bg-gray-50">
+                    <div class="edit-btn bg-blue-600 cursor-pointer"><i class="fas fa-pen mr-1"></i>お知らせを編集</div>
+                    <h3 class="text-xl font-bold text-center mb-8 text-gray-800 editable-text">お知らせ</h3>
+                    <div class="max-w-2xl mx-auto bg-white rounded border border-gray-200 p-4 shadow-sm">
+                        <ul class="divide-y divide-gray-100 text-sm">
+                            <li class="py-3 flex gap-4">
+                                <span class="text-gray-500 w-24 shrink-0 editable-text">2023.10.15</span>
+                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs editable-text">見学会</span>
+                                <a href="#" class="hover:text-blue-600 transition editable-text">秋のモデルハウス見学会を開催いたします</a>
+                            </li>
+                            <li class="py-3 flex gap-4">
+                                <span class="text-gray-500 w-24 shrink-0 editable-text">2023.09.01</span>
+                                <span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs editable-text">お知らせ</span>
+                                <a href="#" class="hover:text-blue-600 transition editable-text">施工事例を3件追加しました</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- サービス紹介 -->
+                <div class="editable-section py-12 px-8 bg-white">
+                    <div class="edit-btn bg-blue-600 cursor-pointer"><i class="fas fa-pen mr-1"></i>コンテンツを編集</div>
+                    <h3 class="text-xl font-bold text-center mb-8 text-gray-800 editable-text">事業内容</h3>
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="bg-gray-100 h-40 rounded flex flex-col items-center justify-center text-gray-500 p-4 text-center">
+                            <i class="fas fa-home text-3xl mb-2"></i>
+                            <span class="editable-text font-bold text-sm">新築注文住宅</span>
+                        </div>
+                        <div class="bg-gray-100 h-40 rounded flex flex-col items-center justify-center text-gray-500 p-4 text-center">
+                            <i class="fas fa-tools text-3xl mb-2"></i>
+                            <span class="editable-text font-bold text-sm">リフォーム・増改築</span>
+                        </div>
+                        <div class="bg-gray-100 h-40 rounded flex flex-col items-center justify-center text-gray-500 p-4 text-center">
+                            <i class="fas fa-seedling text-3xl mb-2"></i>
+                            <span class="editable-text font-bold text-sm">外構・エクステリア</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 右サイドバー（AIナビゲーター チャットUI） -->
+        <aside class="w-[350px] bg-white border-l border-gray-200 flex flex-col shrink-0 shadow-[-4px_0_15px_rgba(0,0,0,0.03)] z-20">
+            <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center gap-3">
+                <div class="relative">
+                    <img src="https://ui-avatars.com/api/?name=I&background=3b82f6&color=fff&rounded=true" alt="AI Agent" class="w-10 h-10 rounded-full border-2 border-white shadow-sm">
+                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-800 text-sm">ナビゲーター "I" (アイ)</h2>
+                    <p class="text-xs text-blue-600 font-medium">Gemini AI 稼働中</p>
+                </div>
+            </div>
+
+            <!-- チャット履歴エリア -->
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4" id="chat-container">
+                <!-- AIの最初のメッセージ -->
+                <div class="flex gap-3 max-w-[90%]">
+                    <img src="https://ui-avatars.com/api/?name=I&background=3b82f6&color=fff&rounded=true" alt="AI" class="w-8 h-8 rounded-full shrink-0">
+                    <div class="bg-gray-100 rounded-2xl rounded-tl-none p-3 text-sm text-gray-700 leading-relaxed shadow-sm">
+                        こんにちは！Smartpage I の専属ナビゲーター「アイ」です。<br>
+                        ホームページの運用でお困りのことはありませんか？<br>
+                        「アクセスを増やしたい」「採用を強化したい」など、何でもご相談ください！
+                    </div>
+                </div>
+            </div>
+
+            <!-- 入力エリア -->
+            <div class="p-3 border-t border-gray-200 bg-white">
+                <div class="flex flex-wrap gap-2 mb-3" id="suggestions">
+                    <button class="chat-chip text-[11px] bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-50 transition shadow-sm" onclick="sendSuggestedMessage('最近、ホームページからの問い合わせが減っていて悩んでいます。')">集客・売上に悩んでいる</button>
+                    <button class="chat-chip text-[11px] bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-50 transition shadow-sm" onclick="sendSuggestedMessage('求人募集を出しても、なかなか人が集まりません。')">採用を強化したい</button>
+                </div>
+                <form id="chat-form" class="relative" onsubmit="event.preventDefault(); handleUserSubmit();">
+                    <textarea id="chat-input" rows="2" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 pr-12 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none" placeholder="メッセージを入力..."></textarea>
+                    <button type="submit" id="send-btn" class="absolute right-2 bottom-2 p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition disabled:opacity-50">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        /* =================================================================
+           1. WYSIWYG エディター機能 (見たまま簡単編集)
+        ================================================================= */
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const section = btn.closest('.editable-section');
+                const isEditing = section.classList.contains('is-editing');
+                const editableElements = section.querySelectorAll('.editable-text');
+
+                if (isEditing) {
+                    // 保存モードへ（編集終了）
+                    section.classList.remove('is-editing');
+                    editableElements.forEach(el => el.removeAttribute('contenteditable'));
+                    btn.innerHTML = '<i class="fas fa-pen mr-1"></i>' + btn.dataset.originalText;
+                    btn.classList.replace('bg-green-600', 'bg-blue-600');
+                } else {
+                    // 編集モードへ
+                    if(!btn.dataset.originalText) {
+                        btn.dataset.originalText = btn.innerText.trim();
+                    }
+                    section.classList.add('is-editing');
+                    editableElements.forEach(el => {
+                        el.setAttribute('contenteditable', 'true');
+                    });
+                    btn.innerHTML = '<i class="fas fa-save mr-1"></i>保存する';
+                    btn.classList.replace('bg-blue-600', 'bg-green-600');
+                }
+            });
+        });
+
+        /* =================================================================
+           2. Gemini API 連携機能 (AIナビゲーター)
+        ================================================================= */
+        // システムプロンプトの設定（ユーザー様から提供されたものを設定）
+        const systemPrompt = `
+# 役割と目的
+あなたは「Smartpage I（スマートページ・アイ）」を利用するユーザー専属の、優秀なWebコンサルタント兼AIナビゲーター「アイ」です。
+あなたの目的は、ユーザーの業種や現状の課題をヒアリングし、Smartpage I の豊富な機能とノウハウを駆使して「次にホームページで何をすべきか」を具体的にガイドし、成果（集客・採用・売上向上など）に導くことです。
+
+# 前提知識：Smartpage I の武器
+・【実績とノウハウ】3万社・30万ページ超の提供実績に基づく、多業種に特化した成功ノウハウ。
+・【操作性】「見たまま簡単編集機能」による、専門知識不要のスピーディーな更新。
+・【販路拡大】クレジットカード決済に対応した「注文・予約受付機能」。
+・【採用強化】Indeed・Googleしごと検索に自動掲載される「求人検索エンジン連携」。
+・【分析と改善】手軽に状況を把握でき、成果レポートも届く「アクセス解析機能」。
+・【表現力】背景動画、画像編集ツール、SNS連携、限定公開ページ機能など。
+
+# 行動指針（アドバイスのルール）
+1. ユーザーの状況（業種、目的、現在の悩み）を対話形式で優しくヒアリングしてください。
+2. ユーザーの目的に応じて、Smartpageのどの機能を使えば解決できるか「次の具体的なアクション」を1〜3つ提案してください。
+3. 専門用語は極力避け、「見たまま簡単編集」で直感的に操作できることを強調し、ユーザーの心理的ハードルを下げてください。
+4. 一方的に話すのではなく、最後に必ず「まずは○○の設定から一緒にやってみますか？」と次のステップを促す問いかけを行ってください。
+
+# 出力フォーマット
+ユーザーからの入力に対し、必ず以下の構成で出力してください。見出しは以下の通りに使ってください。
+1. 【共感と現状分析】：ユーザーの状況への理解を示し、課題を整理する。
+2. 【次の一手のアドバイス】：Smartpageの機能を絡めた具体的な提案。
+3. 【期待できる成果】：そのアクションのメリット。
+4. 【ネクストアクション】：今すぐできる簡単な操作の案内と問いかけ。
+`;
+
+        const apiKey = ""; // 実行環境から自動提供されます
+        let chatHistory = []; // 会話履歴を保持する配列
+
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const suggestions = document.getElementById('suggestions');
+
+        function appendUserMessage(text) {
+            const msgHtml = `
+                <div class="flex gap-3 max-w-[90%] self-end flex-row-reverse mt-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0 text-sm shadow-sm">You</div>
+                    <div class="bg-blue-600 text-white rounded-2xl rounded-tr-none p-3 text-sm leading-relaxed shadow-sm">
+                        ${text.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', msgHtml);
+            scrollToBottom();
+        }
+
+        function appendAIMessage(text) {
+            // 見出しタグをアイコン付きに装飾する
+            let formattedText = text
+                .replace(/1\.? ?【共感と現状分析】[:：]?/g, '<span class="block font-bold text-blue-700 mt-2 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-heart text-pink-500 mr-1"></i>共感と現状分析</span>')
+                .replace(/2\.? ?【次の一手のアドバイス】[:：]?/g, '<span class="block font-bold text-blue-700 mt-4 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i>次の一手のアドバイス</span>')
+                .replace(/3\.? ?【期待できる成果】[:：]?/g, '<span class="block font-bold text-blue-700 mt-4 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-chart-line text-green-500 mr-1"></i>期待できる成果</span>')
+                .replace(/4\.? ?【ネクストアクション】[:：]?/g, '<span class="block font-bold text-blue-700 mt-4 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-flag text-red-500 mr-1"></i>ネクストアクション</span>')
+                .replace(/【共感と現状分析】/g, '<span class="block font-bold text-blue-700 mt-2 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-heart text-pink-500 mr-1"></i>共感と現状分析</span>')
+                .replace(/【次の一手のアドバイス】/g, '<span class="block font-bold text-blue-700 mt-4 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i>次の一手のアドバイス</span>')
+                .replace(/【期待できる成果】/g, '<span class="block font-bold text-blue-700 mt-4 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-chart-line text-green-500 mr-1"></i>期待できる成果</span>')
+                .replace(/【ネクストアクション】/g, '<span class="block font-bold text-blue-700 mt-4 mb-1 border-b border-blue-100 pb-1"><i class="fas fa-flag text-red-500 mr-1"></i>ネクストアクション</span>');
+
+            // marked.js を使ってMarkdownをHTMLに変換
+            const parsedHtml = marked.parse(formattedText);
+
+                const msgHtml = `
+                <div class="flex gap-3 max-w-[95%] mt-2">
+                    <img src="https://ui-avatars.com/api/?name=I&background=3b82f6&color=fff&rounded=true" alt="AI" class="w-8 h-8 rounded-full shrink-0 shadow-sm border border-gray-200">
+                    <div class="bg-white border border-gray-200 shadow-sm rounded-2xl rounded-tl-none p-4 text-sm text-gray-700 leading-relaxed markdown-body">
+                        ${parsedHtml}
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', msgHtml);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            const typingId = 'typing-' + Date.now();
+            const msgHtml = `
+                <div id="${typingId}" class="flex gap-3 max-w-[90%] mt-2">
+                    <img src="https://ui-avatars.com/api/?name=I&background=3b82f6&color=fff&rounded=true" alt="AI" class="w-8 h-8 rounded-full shrink-0 shadow-sm">
+                    <div class="bg-white border border-gray-200 shadow-sm rounded-2xl rounded-tl-none p-3 text-sm text-gray-500 flex items-center gap-1 h-10 w-16 justify-center">
+                        <i class="fas fa-circle text-[6px] text-blue-400 animate-bounce"></i>
+                        <i class="fas fa-circle text-[6px] text-blue-400 animate-bounce" style="animation-delay: 0.1s"></i>
+                        <i class="fas fa-circle text-[6px] text-blue-400 animate-bounce" style="animation-delay: 0.2s"></i>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', msgHtml);
+            scrollToBottom();
+            return typingId;
+        }
+
+        function removeTyping(id) {
+            const el = document.getElementById(id);
+            if(el) el.remove();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleUserSubmit();
+            }
+        });
+
+        function sendSuggestedMessage(text) {
+            chatInput.value = text;
+            handleUserSubmit();
+            suggestions.style.display = 'none';
+        }
+
+        // Gemini APIへリクエストを送信する関数
+        async function fetchGeminiResponse(userMessage) {
+            // ユーザーのメッセージを履歴に追加
+            chatHistory.push({
+                role: "user",
+                parts: [{ text: userMessage }]
+            });
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            try {
+                // リトライロジックを簡略化して実装
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const aiResponseText = data.candidates[0].content.parts[0].text;
+
+                // AIの返答を履歴に追加
+                chatHistory.push({
+                    role: "model",
+                    parts: [{ text: aiResponseText }]
+                });
+
+                return aiResponseText;
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                return "すみません、エラーが発生しました。時間をおいてもう一度お試しください。";
+            }
+        }
+
+        async function handleUserSubmit() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            appendUserMessage(text);
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+            suggestions.style.display = 'none'; // メッセージ送信後は候補チップを消す
+
+            const typingId = showTyping();
+
+            // Gemini API を呼び出して実際の返答を取得
+            const aiText = await fetchGeminiResponse(text);
+
+            removeTyping(typingId);
+            appendAIMessage(aiText);
+
+            chatInput.disabled = false;
+            sendBtn.disabled = false;
+            chatInput.focus();
+        }
+    </script>
+</body>
+</html>
