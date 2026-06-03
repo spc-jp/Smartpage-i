@@ -171,6 +171,21 @@
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     #chat-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); border-color: var(--blue); }
+
+    /* ===== プレビューモード ===== */
+    body.preview-mode aside,
+    body.preview-mode header,
+    body.preview-mode #where-banner,
+    body.preview-mode footer { display: none !important; }
+    body.preview-mode #canvas-wrap { background: white; }
+    body.preview-mode .sec-hint,
+    body.preview-mode .sec-label { display: none !important; }
+    body.preview-mode .sec { border: none !important; box-shadow: none !important; cursor: default; pointer-events: none; }
+    body.preview-mode #site-canvas { max-width: 100% !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
+    #preview-bar { display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 10px 20px; border-radius: 32px; font-size: 12px; font-weight: 700; z-index: 9999; gap: 12px; align-items: center; box-shadow: 0 4px 24px rgba(0,0,0,0.3); white-space: nowrap; }
+    #preview-bar.show { display: flex; }
+    #preview-bar .exit-btn { background: white; color: var(--navy); border: none; border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    #preview-bar .mode-btn { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; cursor: pointer; }
   </style>
 </head>
 <body class="bg-slate-100 h-screen flex flex-col overflow-hidden text-gray-800">
@@ -186,7 +201,7 @@
     <button onclick="setPreview('pc')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" title="PC表示"><i class="fas fa-desktop text-sm"></i></button>
     <button onclick="setPreview('sp')" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition" title="スマホ表示"><i class="fas fa-mobile-alt text-sm"></i></button>
     <div class="w-px h-5 bg-gray-200"></div>
-    <button class="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition" onclick="showToast('プレビューモード（デモ）')">プレビュー</button>
+    <button class="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition" onclick="togglePreview()">プレビュー</button>
     <button class="px-3 py-1.5 text-sm text-white rounded-lg shadow-sm hover:opacity-90 transition" style="background:var(--navy)" onclick="showToast('✅ 公開しました！')">更新を公開</button>
   </div>
 </header>
@@ -408,6 +423,14 @@
 </footer>
 
 <div id="toast"></div>
+
+<!-- プレビューバー -->
+<div id="preview-bar">
+  <span><i class="fas fa-eye mr-1"></i>プレビュー中</span>
+  <button class="mode-btn" onclick="previewSp()"><i class="fas fa-mobile-alt mr-1"></i>スマホ</button>
+  <button class="mode-btn" onclick="previewPc()"><i class="fas fa-desktop mr-1"></i>PC</button>
+  <button class="exit-btn" onclick="togglePreview()"><i class="fas fa-times mr-1"></i>編集に戻る</button>
+</div>
 
 <script>
 /* =====================================================
@@ -635,10 +658,45 @@ function changeHeroBg(event) {
 /* =====================================================
    プレビュー切替
 ===================================================== */
+let isPreview = false;
+
+function togglePreview() {
+  isPreview = !isPreview;
+  const body = document.body;
+  const bar  = document.getElementById('preview-bar');
+  const btn  = document.querySelector('button[onclick="togglePreview()"]');
+
+  if (isPreview) {
+    // 編集終了
+    deactivateCurrent();
+    body.classList.add('preview-mode');
+    bar.classList.add('show');
+    // ヘッダーのプレビューボタンを非表示
+    if (btn) btn.style.display = 'none';
+    // キャンバスをPC幅にリセット
+    document.getElementById('site-canvas').style.maxWidth = '100%';
+  } else {
+    body.classList.remove('preview-mode');
+    bar.classList.remove('show');
+    if (btn) btn.style.display = '';
+    document.getElementById('site-canvas').style.maxWidth = '880px';
+  }
+}
+
+function previewSp() {
+  document.getElementById('site-canvas').style.maxWidth = '390px';
+  showToast('📱 スマートフォン表示');
+}
+
+function previewPc() {
+  document.getElementById('site-canvas').style.maxWidth = '100%';
+  showToast('🖥️ PC表示');
+}
+
+// PC/スマホ切替（編集モード用）
 function setPreview(mode) {
-  const c = document.getElementById('site-canvas');
-  if (mode === 'sp') { c.style.maxWidth = '390px'; showToast('📱 スマートフォン表示'); }
-  else { c.style.maxWidth = '880px'; showToast('🖥️ PC表示'); }
+  if (mode === 'sp') { document.getElementById('site-canvas').style.maxWidth = '390px'; showToast('📱 スマートフォン表示'); }
+  else { document.getElementById('site-canvas').style.maxWidth = '880px'; showToast('🖥️ PC表示'); }
 }
 
 /* =====================================================
